@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Factory AI Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/dashboard.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <p class="eyebrow">Industrial AI Suite</p>
+          <h1>Smart Factory</h1>
+        </div>
+      </div>
+
+      <nav class="nav-group">
+        <p class="nav-title">Main</p>
+        <button class="nav-item active">Overview</button>
+        <button class="nav-item">Warehouse</button>
+        <button class="nav-item">Production</button>
+        <button class="nav-item">AI Cameras</button>
+        <button class="nav-item">Safety</button>
+        <button class="nav-item">Analytics</button>
+      </nav>
+
+      <nav class="nav-group">
+        <p class="nav-title">Operations</p>
+        <button class="nav-item">Workforce</button>
+        <button class="nav-item">Forms</button>
+        <button class="nav-item">Notifications</button>
+        <button class="nav-item">Reports</button>
+        <button class="nav-item">Settings</button>
+      </nav>
+
+      <section class="sidebar-card">
+        <p class="sidebar-card-label">AI Assistant</p>
+        <h2>Shift optimization ready</h2>
+        <p>Based on absenteeism, daily target, and recent efficiency, line B should receive 2 additional workers.</p>
+        <button class="sidebar-action">Review proposal</button>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Factory control center</p>
+          <h2>Overview Dashboard</h2>
+        </div>
+        <div class="topbar-actions">
+          <label class="searchbox">
+            <span>Search</span>
+            <input type="text" placeholder="Line, item, alert, employee">
+          </label>
+          <button class="icon-button">Alerts <span id="alert-count">12</span></button>
+          <div class="profile-pill">
+            <strong>TL</strong>
+            <div>
+              <span>Operations Manager</span>
+              <small>Factory A</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="hero-panel">
+        <div>
+          <p class="eyebrow">Live command view</p>
+          <h3>Production is stable, but safety and staffing need attention.</h3>
+          <p>
+            AI has detected one restricted-zone entry, two low-stock warehouse zones, and a likely staffing gap
+            on Line 3 during the night shift.
+          </p>
+        </div>
+        <div class="hero-metrics">
+          <div>
+            <span>Target completion</span>
+            <strong>84%</strong>
+          </div>
+          <div>
+            <span>Open incidents</span>
+            <strong>07</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpi-grid" id="kpi-grid"></section>
+
+      <section class="content-grid">
+        <article class="panel panel-wide">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Production status</p>
+              <h3>Line performance today</h3>
+            </div>
+            <button class="text-button">View all lines</button>
+          </div>
+          <div class="line-list" id="line-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Safety</p>
+              <h3>Priority alerts</h3>
+            </div>
+            <button class="text-button">Open safety center</button>
+          </div>
+          <div class="alert-list" id="alert-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Warehouse</p>
+              <h3>Storage signals</h3>
+            </div>
+            <button class="text-button">Inspect inventory</button>
+          </div>
+          <div class="warehouse-list" id="warehouse-list"></div>
+        </article>
+
+        <article class="panel panel-wide">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Workforce</p>
+              <h3>Shift allocation planner</h3>
+            </div>
+            <button class="text-button">Adjust schedule</button>
+          </div>
+          <div class="schedule-layout">
+            <div class="shift-card">
+              <p>Morning shift coverage</p>
+              <strong>96%</strong>
+              <span>Fully staffed in 5 of 6 lines</span>
+            </div>
+            <div class="shift-card warning">
+              <p>Night shift risk</p>
+              <strong>Line 3</strong>
+              <span>2 operators missing against target plan</span>
+            </div>
+            <div class="planner-box">
+              <h4>AI suggestion</h4>
+              <ul id="planner-suggestions"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Forms</p>
+              <h3>Pending approvals</h3>
+            </div>
+            <button class="text-button">Review forms</button>
+          </div>
+          <div class="approval-list" id="approval-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">Reports</p>
+              <h3>Weekly summaries</h3>
+            </div>
+            <button class="text-button">Export center</button>
+          </div>
+          <div class="report-cards">
+            <div class="report-card">
+              <span>Production report</span>
+              <strong>On track</strong>
+              <small>3.2% above last week</small>
+            </div>
+            <div class="report-card">
+              <span>Safety report</span>
+              <strong>Needs action</strong>
+              <small>Restricted-zone events increased</small>
+            </div>
+            <div class="report-card">
+              <span>Warehouse report</span>
+              <strong>Stable</strong>
+              <small>2 zones close to full capacity</small>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="./assets/js/dashboard.js"></script>
+</body>
+</html>

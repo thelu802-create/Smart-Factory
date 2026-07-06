@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Factory AI Dashboard Database ERD</title>
+  <style>
+    :root {
+      --bg: #f4f0e8;
+      --surface: #fffaf2;
+      --surface-strong: #ffffff;
+      --text: #1f2a35;
+      --muted: #61707d;
+      --line: #cad4d8;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --accent-soft: #dcf4ef;
+      --blue: #2563eb;
+      --blue-soft: #e7efff;
+      --warning: #d97706;
+      --warning-soft: #fff2dc;
+      --danger: #c24135;
+      --danger-soft: #ffe8e4;
+      --violet: #6d28d9;
+      --violet-soft: #efe8ff;
+      --shadow: 0 18px 42px rgba(31, 42, 53, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(217, 119, 6, 0.12), transparent 22%),
+        linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      padding: 30px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #f4fffd;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -80px;
+      top: -90px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero > * { position: relative; z-index: 1; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(244, 255, 253, 0.76);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.05;
+    }
+
+    .hero p:last-child {
+      margin: 0;
+      max-width: 1050px;
+      line-height: 1.65;
+      color: rgba(244, 255, 253, 0.86);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .legend span,
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .legend span {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.13);
+    }
+
+    .pill { padding: 4px 8px; }
+    .pk { color: var(--accent-dark); background: var(--accent-soft); }
+    .fk { color: var(--blue); background: var(--blue-soft); }
+    .uk { color: var(--warning); background: var(--warning-soft); }
+    .nullable { color: var(--violet); background: var(--violet-soft); }
+    .logic { color: var(--danger); background: var(--danger-soft); }
+
+    .section {
+      margin-top: 22px;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(255, 250, 242, 0.78);
+      border: 1px solid rgba(203, 213, 216, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .section-header h2 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 32px);
+    }
+
+    .section-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 860px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(270px, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .module {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(202, 212, 216, 0.86);
+    }
+
+    .module-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(202, 212, 216, 0.72);
+    }
+
+    .module-title h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .module-title span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .table-card {
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(31, 42, 53, 0.1);
+      background: var(--surface-strong);
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
+    }
+
+    .table-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      color: #f7fffd;
+      background: linear-gradient(135deg, #1f2a35, #334250);
+    }
+
+    .table-card header strong {
+      font-size: 15px;
+    }
+
+    .table-card header small {
+      color: rgba(247, 255, 253, 0.78);
+      font-weight: 700;
+    }
+
+    .fields {
+      display: grid;
+      margin: 0;
+      padding: 8px 0;
+      list-style: none;
+    }
+
+    .fields li {
+      display: grid;
+      grid-template-columns: minmax(116px, 1fr) 82px auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 12px;
+      border-top: 1px solid rgba(202, 212, 216, 0.56);
+      font-size: 13px;
+    }
+
+    .fields li:first-child { border-top: 0; }
+    .field-name { font-weight: 700; }
+    .field-type { color: var(--muted); font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    .key-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+
+    .relationship-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .relationship-group {
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(202, 212, 216, 0.86);
+      background: var(--surface-strong);
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
+    }
+
+    .relationship-group h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .edge-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .edge-list li {
+      display: grid;
+      gap: 5px;
+      padding: 10px 11px;
+      border-radius: 14px;
+      background: #f8faf9;
+      border: 1px solid rgba(202, 212, 216, 0.7);
+    }
+
+    .edge-list strong {
+      font-size: 13px;
+      color: var(--accent-dark);
+    }
+
+    .edge-list span {
+      color: var(--muted);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .flow-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .flow-node {
+      position: relative;
+      min-height: 104px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(202, 212, 216, 0.88);
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
+    }
+
+    .flow-node::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -13px;
+      transform: translateY(-50%);
+      color: var(--accent);
+      font-weight: 900;
+      z-index: 2;
+    }
+
+    .flow-node:last-child::after { content: ""; }
+
+    .flow-node strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .flow-node span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .diagram-scroll {
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+    }
+
+    .ea-diagram {
+      position: relative;
+      width: 1580px;
+      height: 650px;
+      border-radius: 22px;
+      border: 1px solid rgba(202, 212, 216, 0.9);
+      background:
+        linear-gradient(rgba(31, 42, 53, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 42, 53, 0.04) 1px, transparent 1px),
+        #fffdf8;
+      background-size: 28px 28px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.78), 0 12px 28px rgba(31, 42, 53, 0.06);
+    }
+
+    .ea-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .ea-lines path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ea-lines path.logical {
+      stroke: var(--danger);
+      stroke-dasharray: 7 6;
+    }
+
+    .ea-lines circle {
+      fill: #fffdf8;
+      stroke: var(--accent);
+      stroke-width: 2.5;
+    }
+
+    .ea-lines circle.logical-dot {
+      stroke: var(--danger);
+    }
+
+    .connector-label rect {
+      fill: rgba(255, 253, 248, 0.96);
+      stroke: rgba(202, 212, 216, 0.9);
+      stroke-width: 1;
+      rx: 8;
+    }
+
+    .connector-label text {
+      font: 700 11px Consolas, "Courier New", monospace;
+      fill: #334250;
+      dominant-baseline: middle;
+    }
+
+    .ea-label {
+      font: 700 11px Consolas, "Courier New", monospace;
+      fill: #334250;
+      paint-order: stroke;
+      stroke: #fffdf8;
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+
+    .ea-node {
+      position: absolute;
+      z-index: 2;
+      width: 160px;
+      min-height: 68px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(31, 42, 53, 0.16);
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.08);
+    }
+
+    .ea-node.link-table {
+      border-color: rgba(15, 118, 110, 0.45);
+      background: linear-gradient(180deg, #ffffff, #effbf8);
+    }
+
+    .ea-node.logical-ref {
+      border-color: rgba(194, 65, 53, 0.38);
+      background: #fff4f2;
+    }
+
+    .ea-node strong {
+      display: block;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .ea-node span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .connector-legend {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .connector-legend-item {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(202, 212, 216, 0.86);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .connector-legend-symbol {
+      position: relative;
+      height: 26px;
+      border-radius: 10px;
+      background: rgba(248, 250, 249, 0.92);
+      border: 1px solid rgba(202, 212, 216, 0.7);
+    }
+
+    .connector-legend-symbol::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 12px;
+      border-top: 3px solid var(--accent);
+    }
+
+    .connector-legend-symbol::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fffdf8;
+      border: 2px solid var(--accent);
+      box-shadow: 34px 0 0 -2px #fffdf8, 34px 0 0 0 var(--accent);
+    }
+
+    .connector-legend-symbol.logical::before {
+      border-top-color: var(--danger);
+      border-top-style: dashed;
+    }
+
+    .connector-legend-symbol.logical::after {
+      border-color: var(--danger);
+      box-shadow: 34px 0 0 -2px #fffdf8, 34px 0 0 0 var(--danger);
+    }
+
+    .connector-legend-symbol.link-box::before,
+    .connector-legend-symbol.link-box::after,
+    .connector-legend-symbol.logical-box::before,
+    .connector-legend-symbol.logical-box::after {
+      display: none;
+    }
+
+    .connector-legend-symbol.link-box {
+      background: linear-gradient(180deg, #ffffff, #effbf8);
+      border-color: rgba(15, 118, 110, 0.45);
+    }
+
+    .connector-legend-symbol.logical-box {
+      background: #fff4f2;
+      border-color: rgba(194, 65, 53, 0.38);
+    }
+
+    .connector-legend-item strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    .connector-legend-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .note-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(202, 212, 216, 0.86);
+    }
+
+    .note-card h3 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+
+    .note-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    code {
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      padding: 2px 5px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 1280px) {
+      .module-grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+      .relationship-board { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+      .flow-map { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+      .flow-node::after { display: none; }
+      .diagram-scroll { margin-right: -8px; }
+    }
+
+    @media (max-width: 760px) {
+      .section-header { display: block; }
+      .module-grid,
+      .relationship-board,
+      .connector-legend,
+      .flow-map,
+      .note-grid { grid-template-columns: 1fr; }
+      .fields li { grid-template-columns: 1fr; }
+      .key-badges { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Database architecture</p>
+      <h1>Smart Factory AI Dashboard ERD</h1>
+      <p>Visual database diagram for the dashboard modules, including table fields, primary keys, foreign keys, unique keys, nullable references, and module-level relationships.</p>
+      <div class="legend">
+        <span><i class="pill pk">PK</i> Primary key</span>
+        <span><i class="pill fk">FK</i> Foreign key</span>
+        <span><i class="pill uk">UK</i> Unique key</span>
+        <span><i class="pill nullable">NULL</i> Nullable reference</span>
+        <span><i class="pill logic">LOGIC</i> Logical reference</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Data flow</p>
+          <h2>How the web reads the database</h2>
+        </div>
+        <p>The current C# MVC backend reads SQLite first through <code>SampleDataService</code>. If SQLite is unavailable, it falls back to <code>sample-data.json</code>. Later, the same controllers can move SQL reads into repositories.</p>
+      </div>
+      <div class="flow-map">
+        <div class="flow-node"><strong>Database Tables</strong><span>Production, warehouse, safety, workforce, forms, notifications, reports.</span></div>
+        <div class="flow-node"><strong>SampleDataService</strong><span>SQLite-first loading, DB auto-seed, and JSON fallback for demo safety.</span></div>
+        <div class="flow-node"><strong>Services</strong><span>Business mapping, calculated KPIs, recommendation summaries.</span></div>
+        <div class="flow-node"><strong>MVC Controllers</strong><span>Feature API groups such as WarehouseController and DashboardController.</span></div>
+        <div class="flow-node"><strong>React Frontend</strong><span>Dashboard pages fetch data from <code>localhost:8000</code>.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Tables</p>
+          <h2>Table cards with keys</h2>
+        </div>
+        <p>Cards are grouped by feature module. Field badges show database constraints and references from the current SQL schema.</p>
+      </div>
+
+      <div class="module-grid">
+        <div class="module">
+          <div class="module-title"><h3>Identity</h3><span>2 tables</span></div>
+          <article class="table-card">
+            <header><strong>roles</strong><small>User roles</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">name</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill uk">UK</b></span></li>
+              <li><span class="field-name">description</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>users</strong><small>System users</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">full_name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">email</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill uk">UK</b></span></li>
+              <li><span class="field-name">role_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK roles.id</b></span></li>
+              <li><span class="field-name">department</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">created_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>Factory & Production</h3><span>5 tables</span></div>
+          <article class="table-card">
+            <header><strong>factory_areas</strong><small>Plant zones</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">area_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">risk_level</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">description</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>production_lines</strong><small>Line status</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">area_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK factory_areas.id</b></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">target_output</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">actual_output</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">efficiency</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">defect_rate</span><span class="field-type">REAL</span><span></span></li>
+              <li><span class="field-name">downtime_minutes</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">assigned_workers</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">issue</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>production_records</strong><small>Time series</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">line_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK production_lines.id</b></span></li>
+              <li><span class="field-name">record_time</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">target_output</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">actual_output</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">defect_count</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">downtime_minutes</span><span class="field-type">INTEGER</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>machines</strong><small>Equipment</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">machine_code</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill uk">UK</b></span></li>
+              <li><span class="field-name">name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">line_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK production_lines.id</b></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">last_maintenance_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>machine_issues</strong><small>Issue reports</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">machine_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK machines.id</b></span></li>
+              <li><span class="field-name">line_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK production_lines.id</b></span></li>
+              <li><span class="field-name">severity</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">description</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">reported_by</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">reported_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>Warehouse</h3><span>3 tables</span></div>
+          <article class="table-card">
+            <header><strong>warehouse_zones</strong><small>Storage areas</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">zone_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">capacity</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">current_usage</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>warehouse_items</strong><small>BU / IO inventory</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">io_id</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">io_code</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">bu</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">item_code</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill uk">UK</b></span></li>
+              <li><span class="field-name">item_name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">batch_code</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">category</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">quantity</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">unit</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">zone_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK warehouse_zones.id</b></span></li>
+              <li><span class="field-name">shelf</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">last_movement_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>goods_movements</strong><small>Movement audit</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">item_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK warehouse_items.id</b></span></li>
+              <li><span class="field-name">from_zone_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK zones.id</b><b class="pill nullable">NULL</b></span></li>
+              <li><span class="field-name">to_zone_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK zones.id</b></span></li>
+              <li><span class="field-name">quantity</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">movement_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">moved_by</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">moved_at</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">note</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>Safety & Cameras</h3><span>2 tables</span></div>
+          <article class="table-card">
+            <header><strong>safety_alerts</strong><small>Incidents</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">title</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">alert_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">severity</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">area_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK factory_areas.id</b></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">detected_at</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">assigned_to</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">description</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">action_note</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill nullable">NULL</b></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>camera_events</strong><small>AI detections</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">camera_code</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">area_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK factory_areas.id</b></span></li>
+              <li><span class="field-name">event_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">severity</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">confidence</span><span class="field-type">REAL</span><span></span></li>
+              <li><span class="field-name">event_time</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">related_alert_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK safety_alerts.id</b><b class="pill nullable">NULL</b></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>Workforce</h3><span>2 tables</span></div>
+          <article class="table-card">
+            <header><strong>employees</strong><small>People & skills</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">employee_code</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill uk">UK</b></span></li>
+              <li><span class="field-name">full_name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">department</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">skill_tags</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">availability_status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">current_line_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK production_lines.id</b><b class="pill nullable">NULL</b></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>shift_plans</strong><small>Schedule planning</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">shift_date</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">shift_name</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">line_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK production_lines.id</b></span></li>
+              <li><span class="field-name">required_workers</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">assigned_workers</span><span class="field-type">INTEGER</span><span></span></li>
+              <li><span class="field-name">overtime_hours</span><span class="field-type">REAL</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>Workflow</h3><span>2 tables</span></div>
+          <article class="table-card">
+            <header><strong>form_requests</strong><small>Approvals</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">form_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">requester_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">approver_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">submitted_at</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">approved_at</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill nullable">NULL</b></span></li>
+              <li><span class="field-name">summary</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">rejection_reason</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill nullable">NULL</b></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>notifications</strong><small>User messages</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">title</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">notification_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">severity</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">target_user_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">related_entity_type</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill logic">LOGIC</b></span></li>
+              <li><span class="field-name">related_entity_id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill logic">LOGIC</b></span></li>
+              <li><span class="field-name">created_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="module">
+          <div class="module-title"><h3>AI & Reports</h3><span>2 tables</span></div>
+          <article class="table-card">
+            <header><strong>ai_recommendations</strong><small>Suggested actions</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">module</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">title</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">reason</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">expected_impact</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">status</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">created_at</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">reviewed_by</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b><b class="pill nullable">NULL</b></span></li>
+            </ul>
+          </article>
+          <article class="table-card">
+            <header><strong>reports</strong><small>Snapshots</small></header>
+            <ul class="fields">
+              <li><span class="field-name">id</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill pk">PK</b></span></li>
+              <li><span class="field-name">report_type</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">title</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">period_start</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">period_end</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">summary</span><span class="field-type">TEXT</span><span></span></li>
+              <li><span class="field-name">created_by</span><span class="field-type">TEXT</span><span class="key-badges"><b class="pill fk">FK users.id</b></span></li>
+              <li><span class="field-name">created_at</span><span class="field-type">TEXT</span><span></span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">References</p>
+          <h2>Foreign key map</h2>
+        </div>
+        <p>This map lists every explicit reference in the SQL schema and separates logical notification references from physical foreign keys.</p>
+      </div>
+      <div class="relationship-board">
+        <div class="relationship-group">
+          <h3>Identity & Users</h3>
+          <ul class="edge-list">
+            <li><strong>roles → users</strong><span>users.role_id → roles.id</span></li>
+            <li><strong>users → machine_issues</strong><span>machine_issues.reported_by → users.id</span></li>
+            <li><strong>users → goods_movements</strong><span>goods_movements.moved_by → users.id</span></li>
+            <li><strong>users → safety_alerts</strong><span>safety_alerts.assigned_to → users.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Production</h3>
+          <ul class="edge-list">
+            <li><strong>factory_areas → production_lines</strong><span>production_lines.area_id → factory_areas.id</span></li>
+            <li><strong>production_lines → production_records</strong><span>production_records.line_id → production_lines.id</span></li>
+            <li><strong>production_lines → machines</strong><span>machines.line_id → production_lines.id</span></li>
+            <li><strong>machines → machine_issues</strong><span>machine_issues.machine_id → machines.id</span></li>
+            <li><strong>production_lines → machine_issues</strong><span>machine_issues.line_id → production_lines.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Warehouse</h3>
+          <ul class="edge-list">
+            <li><strong>warehouse_zones → warehouse_items</strong><span>warehouse_items.zone_id → warehouse_zones.id</span></li>
+            <li><strong>warehouse_items → goods_movements</strong><span>goods_movements.item_id → warehouse_items.id</span></li>
+            <li><strong>warehouse_zones → goods_movements</strong><span>goods_movements.from_zone_id → warehouse_zones.id</span></li>
+            <li><strong>warehouse_zones → goods_movements</strong><span>goods_movements.to_zone_id → warehouse_zones.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Safety & Cameras</h3>
+          <ul class="edge-list">
+            <li><strong>factory_areas → safety_alerts</strong><span>safety_alerts.area_id → factory_areas.id</span></li>
+            <li><strong>factory_areas → camera_events</strong><span>camera_events.area_id → factory_areas.id</span></li>
+            <li><strong>safety_alerts → camera_events</strong><span>camera_events.related_alert_id → safety_alerts.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Workforce & Forms</h3>
+          <ul class="edge-list">
+            <li><strong>production_lines → employees</strong><span>employees.current_line_id → production_lines.id</span></li>
+            <li><strong>production_lines → shift_plans</strong><span>shift_plans.line_id → production_lines.id</span></li>
+            <li><strong>users → form_requests</strong><span>form_requests.requester_id → users.id</span></li>
+            <li><strong>users → form_requests</strong><span>form_requests.approver_id → users.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Notifications, AI, Reports</h3>
+          <ul class="edge-list">
+            <li><strong>users → notifications</strong><span>notifications.target_user_id → users.id</span></li>
+            <li><strong>users → ai_recommendations</strong><span>ai_recommendations.reviewed_by → users.id</span></li>
+            <li><strong>users → reports</strong><span>reports.created_by → users.id</span></li>
+            <li><strong>notifications → module entities</strong><span>related_entity_type + related_entity_id → logical reference</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Enterprise relationship layer</p>
+          <h2>Junction and link tables</h2>
+        </div>
+        <p>These tables make many-to-many relationships explicit, preserve history, and allow the backend to grow from simple JSON reads into repository-based relational queries.</p>
+      </div>
+      <div class="connector-legend" aria-label="Connector symbol legend">
+        <div class="connector-legend-item">
+          <span class="connector-legend-symbol"></span>
+          <div><strong>Physical FK connector</strong><span>Green solid line means a real foreign key relationship in the SQL schema.</span></div>
+        </div>
+        <div class="connector-legend-item">
+          <span class="connector-legend-symbol logical"></span>
+          <div><strong>Logical reference</strong><span>Red dashed line means entity_type/entity_id style reference, not a strict FK.</span></div>
+        </div>
+        <div class="connector-legend-item">
+          <span class="connector-legend-symbol link-box"></span>
+          <div><strong>Link / junction table</strong><span>Green-tinted table connects two masters or transaction tables.</span></div>
+        </div>
+        <div class="connector-legend-item">
+          <span class="connector-legend-symbol logical-box"></span>
+          <div><strong>Logical target</strong><span>Red-tinted box represents a flexible business entity or report source.</span></div>
+        </div>
+      </div>
+      <div class="diagram-scroll" aria-label="Enterprise table relationship diagram with connector lines">
+        <div class="ea-diagram">
+          <svg class="ea-lines" viewBox="0 0 1580 650" role="img" aria-label="Visible connector lines between database tables">
+            <path d="M190 74 H300"></path>
+            <circle cx="190" cy="74" r="4"></circle><circle cx="300" cy="74" r="4"></circle>
+            <path d="M460 74 H570"></path>
+            <circle cx="460" cy="74" r="4"></circle><circle cx="570" cy="74" r="4"></circle>
+            <g class="connector-label" transform="translate(216 50)"><rect width="58" height="21"></rect><text x="29" y="11" text-anchor="middle">role_id</text></g>
+            <g class="connector-label" transform="translate(467 50)"><rect width="96" height="21"></rect><text x="48" y="11" text-anchor="middle">permission_id</text></g>
+
+            <path d="M1000 74 H1110"></path>
+            <circle cx="1000" cy="74" r="4"></circle><circle cx="1110" cy="74" r="4"></circle>
+            <path class="logical" d="M1270 74 H1380"></path>
+            <circle class="logical-dot" cx="1270" cy="74" r="4"></circle><circle class="logical-dot" cx="1380" cy="74" r="4"></circle>
+            <g class="connector-label" transform="translate(1007 50)"><rect width="96" height="21"></rect><text x="48" y="11" text-anchor="middle">notification_id</text></g>
+            <g class="connector-label" transform="translate(1299 50)"><rect width="52" height="21"></rect><text x="26" y="11" text-anchor="middle">entity</text></g>
+
+            <path d="M190 204 H300"></path>
+            <circle cx="190" cy="204" r="4"></circle><circle cx="300" cy="204" r="4"></circle>
+            <path d="M460 204 H570"></path>
+            <circle cx="460" cy="204" r="4"></circle><circle cx="570" cy="204" r="4"></circle>
+            <path d="M730 204 H840"></path>
+            <circle cx="730" cy="204" r="4"></circle><circle cx="840" cy="204" r="4"></circle>
+            <g class="connector-label" transform="translate(221 180)"><rect width="48" height="21"></rect><text x="24" y="11" text-anchor="middle">bu_id</text></g>
+            <g class="connector-label" transform="translate(466 180)"><rect width="98" height="21"></rect><text x="49" y="11" text-anchor="middle">io_master_id</text></g>
+            <g class="connector-label" transform="translate(758 180)"><rect width="54" height="21"></rect><text x="27" y="11" text-anchor="middle">item_id</text></g>
+
+            <path d="M190 334 H300"></path>
+            <circle cx="190" cy="334" r="4"></circle><circle cx="300" cy="334" r="4"></circle>
+            <path d="M460 334 H570"></path>
+            <circle cx="460" cy="334" r="4"></circle><circle cx="570" cy="334" r="4"></circle>
+            <path d="M1110 334 H1000"></path>
+            <circle cx="1110" cy="334" r="4"></circle><circle cx="1000" cy="334" r="4"></circle>
+            <path d="M840 346 V386 H190 V346"></path>
+            <circle cx="840" cy="346" r="4"></circle><circle cx="190" cy="346" r="4"></circle>
+            <g class="connector-label" transform="translate(202 310)"><rect width="86" height="21"></rect><text x="43" y="11" text-anchor="middle">employee_id</text></g>
+            <g class="connector-label" transform="translate(484 310)"><rect width="62" height="21"></rect><text x="31" y="11" text-anchor="middle">skill_id</text></g>
+            <g class="connector-label" transform="translate(1026 310)"><rect width="58" height="21"></rect><text x="29" y="11" text-anchor="middle">shift_id</text></g>
+            <g class="connector-label" transform="translate(410 372)"><rect width="86" height="21"></rect><text x="43" y="11" text-anchor="middle">employee_id</text></g>
+
+            <path d="M190 464 H300"></path>
+            <circle cx="190" cy="464" r="4"></circle><circle cx="300" cy="464" r="4"></circle>
+            <path d="M460 464 H570"></path>
+            <circle cx="460" cy="464" r="4"></circle><circle cx="570" cy="464" r="4"></circle>
+            <path d="M1000 464 H1110"></path>
+            <circle cx="1000" cy="464" r="4"></circle><circle cx="1110" cy="464" r="4"></circle>
+            <path class="logical" d="M1270 464 H1380"></path>
+            <circle class="logical-dot" cx="1270" cy="464" r="4"></circle><circle class="logical-dot" cx="1380" cy="464" r="4"></circle>
+            <g class="connector-label" transform="translate(217 440)"><rect width="56" height="21"></rect><text x="28" y="11" text-anchor="middle">alert_id</text></g>
+            <g class="connector-label" transform="translate(457 440)"><rect width="116" height="21"></rect><text x="58" y="11" text-anchor="middle">camera_event_id</text></g>
+            <g class="connector-label" transform="translate(994 440)"><rect width="122" height="21"></rect><text x="61" y="11" text-anchor="middle">recommendation_id</text></g>
+
+            <path d="M190 594 H300"></path>
+            <circle cx="190" cy="594" r="4"></circle><circle cx="300" cy="594" r="4"></circle>
+            <path d="M460 594 H570"></path>
+            <circle cx="460" cy="594" r="4"></circle><circle cx="570" cy="594" r="4"></circle>
+            <path d="M1000 594 H1110"></path>
+            <circle cx="1000" cy="594" r="4"></circle><circle cx="1110" cy="594" r="4"></circle>
+            <path class="logical" d="M1270 594 H1380"></path>
+            <circle class="logical-dot" cx="1270" cy="594" r="4"></circle><circle class="logical-dot" cx="1380" cy="594" r="4"></circle>
+            <g class="connector-label" transform="translate(202 570)"><rect width="86" height="21"></rect><text x="43" y="11" text-anchor="middle">approver_id</text></g>
+            <g class="connector-label" transform="translate(487 570)"><rect width="56" height="21"></rect><text x="28" y="11" text-anchor="middle">form_id</text></g>
+            <g class="connector-label" transform="translate(1023 570)"><rect width="64" height="21"></rect><text x="32" y="11" text-anchor="middle">report_id</text></g>
+          </svg>
+
+          <div class="ea-node" style="left: 30px; top: 40px;"><strong>roles</strong><span>Role master</span></div>
+          <div class="ea-node link-table" style="left: 300px; top: 40px;"><strong>role_permissions</strong><span>Role ⇄ permission</span></div>
+          <div class="ea-node" style="left: 570px; top: 40px;"><strong>permissions</strong><span>Action catalog</span></div>
+          <div class="ea-node" style="left: 840px; top: 40px;"><strong>notifications</strong><span>User message</span></div>
+          <div class="ea-node link-table" style="left: 1110px; top: 40px;"><strong>notification_links</strong><span>Message ⇄ entity</span></div>
+          <div class="ea-node logical-ref" style="left: 1380px; top: 40px;"><strong>business entity</strong><span>Logical target</span></div>
+
+          <div class="ea-node" style="left: 30px; top: 170px;"><strong>business_units</strong><span>BU master</span></div>
+          <div class="ea-node" style="left: 300px; top: 170px;"><strong>io_masters</strong><span>IO master</span></div>
+          <div class="ea-node link-table" style="left: 570px; top: 170px;"><strong>warehouse_item_io_links</strong><span>Item ⇄ IO</span></div>
+          <div class="ea-node" style="left: 840px; top: 170px;"><strong>warehouse_items</strong><span>Inventory</span></div>
+
+          <div class="ea-node" style="left: 30px; top: 300px;"><strong>employees</strong><span>Worker master</span></div>
+          <div class="ea-node link-table" style="left: 300px; top: 300px;"><strong>employee_skills</strong><span>Employee ⇄ skill</span></div>
+          <div class="ea-node" style="left: 570px; top: 300px;"><strong>skills</strong><span>Skill catalog</span></div>
+          <div class="ea-node link-table" style="left: 840px; top: 300px;"><strong>shift_plan_assignments</strong><span>Shift ⇄ employee</span></div>
+          <div class="ea-node" style="left: 1110px; top: 300px;"><strong>shift_plans</strong><span>Shift plan</span></div>
+
+          <div class="ea-node" style="left: 30px; top: 430px;"><strong>safety_alerts</strong><span>Incident</span></div>
+          <div class="ea-node link-table" style="left: 300px; top: 430px;"><strong>safety_alert_camera_events</strong><span>Alert ⇄ evidence</span></div>
+          <div class="ea-node" style="left: 570px; top: 430px;"><strong>camera_events</strong><span>AI detection</span></div>
+          <div class="ea-node" style="left: 840px; top: 430px;"><strong>ai_recommendations</strong><span>AI action</span></div>
+          <div class="ea-node link-table" style="left: 1110px; top: 430px;"><strong>ai_recommendation_links</strong><span>AI ⇄ entity</span></div>
+          <div class="ea-node logical-ref" style="left: 1380px; top: 430px;"><strong>affected entity</strong><span>Logical target</span></div>
+
+          <div class="ea-node" style="left: 30px; top: 560px;"><strong>users</strong><span>Approver</span></div>
+          <div class="ea-node link-table" style="left: 300px; top: 560px;"><strong>form_approval_steps</strong><span>Approval workflow</span></div>
+          <div class="ea-node" style="left: 570px; top: 560px;"><strong>form_requests</strong><span>Request</span></div>
+          <div class="ea-node" style="left: 840px; top: 560px;"><strong>reports</strong><span>Snapshot</span></div>
+          <div class="ea-node link-table" style="left: 1110px; top: 560px;"><strong>report_source_links</strong><span>Report ⇄ source</span></div>
+          <div class="ea-node logical-ref" style="left: 1380px; top: 560px;"><strong>source records</strong><span>Report inputs</span></div>
+        </div>
+      </div>
+      <div class="relationship-board">
+        <div class="relationship-group">
+          <h3>Role permissions</h3>
+          <ul class="edge-list">
+            <li><strong>permissions</strong><span>Master list of module actions such as DASHBOARD_VIEW or WAREHOUSE_MANAGE.</span></li>
+            <li><strong>role_permissions</strong><span>roles.id ⇄ permissions.id</span></li>
+            <li><strong>Use case</strong><span>Controls menu access, screen actions, and approval authority.</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>BU / IO mapping</h3>
+          <ul class="edge-list">
+            <li><strong>business_units</strong><span>Master BU records: Ryobi, AES, MIL.</span></li>
+            <li><strong>io_masters</strong><span>business_units.id → io_masters.bu_id</span></li>
+            <li><strong>warehouse_item_io_links</strong><span>warehouse_items.id ⇄ io_masters.id</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Employee skills</h3>
+          <ul class="edge-list">
+            <li><strong>skills</strong><span>Master skill catalog for production, quality, machine, warehouse.</span></li>
+            <li><strong>employee_skills</strong><span>employees.id ⇄ skills.id with proficiency and certification dates.</span></li>
+            <li><strong>shift_plan_assignments</strong><span>shift_plans.id ⇄ employees.id with assignment role and status.</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Safety evidence</h3>
+          <ul class="edge-list">
+            <li><strong>safety_alert_camera_events</strong><span>safety_alerts.id ⇄ camera_events.id</span></li>
+            <li><strong>Use case</strong><span>One safety alert can be supported by multiple camera events.</span></li>
+            <li><strong>Traceability</strong><span>Keeps AI detection evidence attached to incident response.</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Forms approval</h3>
+          <ul class="edge-list">
+            <li><strong>form_approval_steps</strong><span>form_requests.id → form_approval_steps.form_id</span></li>
+            <li><strong>Approver reference</strong><span>users.id → form_approval_steps.approver_id</span></li>
+            <li><strong>Use case</strong><span>Supports multi-step approval workflow instead of a single approver only.</span></li>
+          </ul>
+        </div>
+        <div class="relationship-group">
+          <h3>Traceability links</h3>
+          <ul class="edge-list">
+            <li><strong>notification_links</strong><span>notifications.id → linked production, warehouse, safety, or form entity.</span></li>
+            <li><strong>ai_recommendation_links</strong><span>ai_recommendations.id → related business entities.</span></li>
+            <li><strong>report_source_links</strong><span>reports.id → source records included in the report snapshot.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Implementation notes</p>
+          <h2>What matters when extending the DB</h2>
+        </div>
+        <p>These notes help keep the MVC backend, SQLite tables, frontend tables, and future repositories aligned.</p>
+      </div>
+      <div class="note-grid">
+        <div class="note-card">
+          <h3>Warehouse search</h3>
+          <ul>
+            <li>Search by <code>io_id</code>, <code>io_code</code>, <code>bu</code>.</li>
+            <li>Also search by item code, item name, and batch.</li>
+            <li>Keep <code>item_code</code> unique for fast lookup.</li>
+          </ul>
+        </div>
+        <div class="note-card">
+          <h3>Dashboard KPIs</h3>
+          <ul>
+            <li>Output and completion come from <code>production_lines</code>.</li>
+            <li>Safety alert count comes from <code>safety_alerts</code>.</li>
+            <li>Warehouse signals come from <code>warehouse_items.status</code>.</li>
+          </ul>
+        </div>
+        <div class="note-card">
+          <h3>Logical references</h3>
+          <ul>
+            <li><code>notifications.related_entity_id</code> is flexible by design.</li>
+            <li>It can point to safety, production, forms, or warehouse records.</li>
+            <li>Add stricter foreign keys later if the domain becomes stable.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Factory AI Dashboard Activity and Sequence Diagrams</title>
+  <style>
+    :root {
+      --bg: #f4f0e8;
+      --surface: #fffaf2;
+      --surface-strong: #ffffff;
+      --text: #1f2a35;
+      --muted: #62707d;
+      --line: #cbd5d8;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --accent-soft: #dbf4ef;
+      --warning: #d97706;
+      --warning-soft: #fff3df;
+      --danger: #c24135;
+      --danger-soft: #ffe7e3;
+      --blue: #2563eb;
+      --blue-soft: #e6efff;
+      --shadow: 0 18px 42px rgba(31, 42, 53, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(217, 119, 6, 0.12), transparent 22%),
+        linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      padding: 30px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #f4fffd;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -70px;
+      top: -80px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero p,
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(244, 255, 253, 0.76);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.05;
+    }
+
+    .hero p:last-child {
+      margin: 0;
+      max-width: 980px;
+      line-height: 1.65;
+      color: rgba(244, 255, 253, 0.86);
+    }
+
+    .section {
+      margin-top: 22px;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(255, 250, 242, 0.78);
+      border: 1px solid rgba(203, 213, 216, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .section-header h2 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 32px);
+    }
+
+    .section-header p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .tag {
+      white-space: nowrap;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .activity-board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(160px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .activity-node {
+      min-height: 118px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(203, 213, 216, 0.9);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
+    }
+
+    .activity-node:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      width: 14px;
+      height: 2px;
+      background: var(--line);
+    }
+
+    .activity-node:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      right: -15px;
+      top: calc(50% - 5px);
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 8px solid var(--line);
+    }
+
+    .activity-node strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .activity-node span {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .activity-node.start,
+    .activity-node.end {
+      background: linear-gradient(135deg, var(--accent-soft), #ffffff);
+      border-color: rgba(15, 118, 110, 0.25);
+    }
+
+    .activity-node.decision {
+      background: var(--warning-soft);
+      border-color: rgba(217, 119, 6, 0.25);
+    }
+
+    .activity-note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .note-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(203, 213, 216, 0.76);
+    }
+
+    .note-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .note-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .sequence-tabs {
+      display: grid;
+      gap: 24px;
+    }
+
+    .sequence-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(203, 213, 216, 0.9);
+      overflow-x: auto;
+    }
+
+    .sequence-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .sequence-title h3 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .sequence-title span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .sequence {
+      min-width: 900px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      position: relative;
+      padding-bottom: 8px;
+    }
+
+    .lane {
+      position: relative;
+      min-height: 560px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(219, 244, 239, 0.52), rgba(255, 255, 255, 0.72));
+      border: 1px solid rgba(203, 213, 216, 0.72);
+      padding: 14px 10px;
+    }
+
+    .lane h4 {
+      margin: 0;
+      padding: 10px;
+      border-radius: 14px;
+      background: var(--accent-dark);
+      color: #f4fffd;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .lifeline {
+      position: absolute;
+      top: 62px;
+      bottom: 12px;
+      left: 50%;
+      width: 2px;
+      background: repeating-linear-gradient(180deg, var(--line), var(--line) 8px, transparent 8px, transparent 16px);
+      transform: translateX(-50%);
+    }
+
+    .message {
+      position: absolute;
+      left: calc(var(--from) * 20% + 10%);
+      right: calc((4 - var(--to)) * 20% + 10%);
+      top: var(--y);
+      height: 28px;
+      z-index: 4;
+    }
+
+    .message.reverse {
+      left: calc(var(--to) * 20% + 10%);
+      right: calc((4 - var(--from)) * 20% + 10%);
+    }
+
+    .message-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 13px;
+      border-top: 2px solid var(--blue);
+    }
+
+    .message-line::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      top: -6px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 9px solid var(--blue);
+    }
+
+    .message.reverse .message-line::after {
+      right: auto;
+      left: -1px;
+      border-left: 0;
+      border-right: 9px solid var(--blue);
+    }
+
+    .message-label {
+      position: absolute;
+      left: 50%;
+      top: -17px;
+      transform: translateX(-50%);
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #1749b8;
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .activation {
+      position: absolute;
+      left: 50%;
+      top: var(--top);
+      height: var(--height);
+      width: 14px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.2);
+      border: 1px solid rgba(15, 118, 110, 0.22);
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      border: 1px solid rgba(203, 213, 216, 0.72);
+      font-size: 13px;
+    }
+
+    .legend i {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .flow-grid,
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .flow-card,
+    .scenario-card,
+    .detail-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(203, 213, 216, 0.9);
+      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
+    }
+
+    .flow-card h3,
+    .scenario-card h3,
+    .detail-card h3 {
+      margin: 0 0 10px;
+      font-size: 21px;
+    }
+
+    .flow-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .flow-meta span,
+    .scenario-pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .mini-activity {
+      margin: 14px 0 16px;
+      padding: 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(219, 244, 239, 0.42), rgba(255, 255, 255, 0.84));
+      border: 1px solid rgba(203, 213, 216, 0.78);
+      overflow-x: auto;
+    }
+
+    .mini-activity-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mini-activity-title strong {
+      font-size: 14px;
+    }
+
+    .mini-activity-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mini-flow {
+      min-width: 720px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(128px, 1fr));
+      gap: 18px;
+      align-items: center;
+    }
+
+    .mini-node {
+      position: relative;
+      min-height: 86px;
+      padding: 12px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(203, 213, 216, 0.92);
+      box-shadow: 0 8px 18px rgba(31, 42, 53, 0.05);
+    }
+
+    .mini-node:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: 50%;
+      width: 18px;
+      border-top: 2px solid var(--accent);
+    }
+
+    .mini-node:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      right: -19px;
+      top: calc(50% - 5px);
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 8px solid var(--accent);
+      z-index: 2;
+    }
+
+    .mini-node strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .mini-node span {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .mini-node.start,
+    .mini-node.end {
+      border-color: rgba(15, 118, 110, 0.3);
+      background: linear-gradient(135deg, var(--accent-soft), #ffffff);
+    }
+
+    .mini-node.decision {
+      border-color: rgba(217, 119, 6, 0.38);
+      background: var(--warning-soft);
+    }
+
+    .mini-node.action {
+      border-color: rgba(37, 99, 235, 0.26);
+      background: var(--blue-soft);
+    }
+
+    .mini-branch {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .mini-branch b {
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(203, 213, 216, 0.72);
+      color: #8a4a04;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .flow-steps {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: flow-step;
+    }
+
+    .flow-steps li {
+      counter-increment: flow-step;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(244, 240, 232, 0.62);
+      border: 1px solid rgba(203, 213, 216, 0.62);
+    }
+
+    .flow-steps li::before {
+      content: counter(flow-step);
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .flow-steps strong,
+    .scenario-card strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .flow-steps span,
+    .scenario-card p,
+    .detail-card p {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .branch-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--warning-soft);
+      border: 1px solid rgba(217, 119, 6, 0.2);
+    }
+
+    .branch-box strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #8a4a04;
+    }
+
+    .branch-box p {
+      margin: 0;
+      color: #735027;
+      line-height: 1.5;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .detail-list,
+    .scenario-list {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .scenario-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .scenario-block {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(203, 213, 216, 0.68);
+    }
+
+    .scenario-block p {
+      margin: 0;
+    }
+
+    .scenario-block.warning {
+      background: var(--warning-soft);
+    }
+
+    .scenario-block.danger {
+      background: var(--danger-soft);
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(203, 213, 216, 0.86);
+    }
+
+    .matrix th,
+    .matrix td {
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(203, 213, 216, 0.72);
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .matrix th {
+      background: var(--accent-dark);
+      color: #f4fffd;
+      font-size: 13px;
+    }
+
+    .matrix td {
+      color: var(--muted);
+    }
+
+    .matrix tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 1200px) {
+      .activity-board {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .activity-node::before,
+      .activity-node::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .page {
+        width: min(100% - 20px, 760px);
+        padding-top: 20px;
+      }
+
+      .hero,
+      .section {
+        border-radius: 18px;
+        padding: 20px;
+      }
+
+      .section-header,
+      .sequence-title {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .activity-board,
+      .activity-note-grid,
+      .flow-grid,
+      .scenario-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-activity-title {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Requirements companion document</p>
+      <h1>Activity and Sequence Diagrams</h1>
+      <p>
+        These diagrams describe the main operational behavior of the Smart Factory AI Dashboard.
+        They are designed to support implementation planning for the React frontend and C# ASP.NET Core backend.
+      </p>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Overall Activity Diagram</h2>
+          <p>
+            This activity diagram shows the main user journey from login to dashboard monitoring,
+            AI analysis, operational action, and reporting update.
+          </p>
+        </div>
+        <span class="tag">Global flow</span>
+      </div>
+
+      <div class="activity-board">
+        <article class="activity-node start">
+          <strong>1. User opens app</strong>
+          <span>User accesses the Smart Factory AI Dashboard through the browser.</span>
+        </article>
+        <article class="activity-node decision">
+          <strong>2. Login and role check</strong>
+          <span>System verifies account and loads role-based permissions.</span>
+        </article>
+        <article class="activity-node">
+          <strong>3. Load dashboard</strong>
+          <span>KPIs, production status, warehouse signals, workforce data, and alerts are displayed.</span>
+        </article>
+        <article class="activity-node decision">
+          <strong>4. Detect issue?</strong>
+          <span>System checks whether any module has warning or critical status.</span>
+        </article>
+        <article class="activity-node">
+          <strong>5. AI recommendation</strong>
+          <span>System creates suggestions for safety, productivity, warehouse, or staffing decisions.</span>
+        </article>
+        <article class="activity-node end">
+          <strong>6. User action and record</strong>
+          <span>User resolves, approves, rejects, escalates, or exports. The result is saved for reporting.</span>
+        </article>
+      </div>
+
+      <div class="activity-note-grid">
+        <article class="note-card">
+          <strong>Normal path</strong>
+          <p>If no critical issue exists, the user continues monitoring and reviewing dashboard metrics.</p>
+        </article>
+        <article class="note-card">
+          <strong>Warning path</strong>
+          <p>If a warning appears, the user opens the related module and decides whether action is needed.</p>
+        </article>
+        <article class="note-card">
+          <strong>Critical path</strong>
+          <p>If a critical alert appears, the system highlights it on the dashboard and routes it to the responsible role.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Detailed Activity Flows</h2>
+          <p>
+            Each flow below describes what the user does, what the system checks, what data changes,
+            and what alternate paths should be handled during implementation.
+          </p>
+        </div>
+        <span class="tag">Per module flow</span>
+      </div>
+
+      <div class="flow-grid">
+        <article class="flow-card">
+          <h3>Dashboard Monitoring Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Factory Manager</span>
+            <span>Module: Dashboard</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Monitor, branch by severity, then route to action.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Open dashboard</strong><span>Role-based widgets load.</span></div>
+              <div class="mini-node"><strong>Read KPIs</strong><span>Output, safety, warehouse, workforce.</span></div>
+              <div class="mini-node decision"><strong>Issue found?</strong><span>System ranks normal, warning, critical.</span><div class="mini-branch"><b>No: monitor</b><b>Yes: drill down</b></div></div>
+              <div class="mini-node action"><strong>Open detail</strong><span>User opens related module entity.</span></div>
+              <div class="mini-node end"><strong>Save result</strong><span>Action updates dashboard summary.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Login and role load</strong><span>System identifies the user role and displays widgets allowed for that role.</span></div></li>
+            <li><div><strong>Load factory KPIs</strong><span>Daily output, target completion, active lines, alerts, warehouse occupancy, and workforce coverage are loaded.</span></div></li>
+            <li><div><strong>Prioritize alerts</strong><span>Critical safety and production alerts are placed above normal information.</span></div></li>
+            <li><div><strong>User selects issue</strong><span>User clicks a KPI, alert, production line, warehouse signal, pending form, or AI suggestion.</span></div></li>
+            <li><div><strong>Redirect to detail</strong><span>System opens the related module page and passes the selected entity id.</span></div></li>
+            <li><div><strong>Record action</strong><span>Any resolve, approve, reject, or escalate action updates the dashboard summary.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If data fails to load, the dashboard shows an error state and offers retry. If no alerts exist, the dashboard shows a normal operating state.</p>
+          </div>
+        </article>
+
+        <article class="flow-card">
+          <h3>Warehouse Item Tracking Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Warehouse Manager</span>
+            <span>Module: Warehouse</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Search item, validate zone, and record warehouse action.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Open warehouse</strong><span>Load zones, capacity, item status.</span></div>
+              <div class="mini-node"><strong>Search item</strong><span>By IO, BU, item code, batch.</span></div>
+              <div class="mini-node decision"><strong>Item found?</strong><span>System checks item and movement history.</span><div class="mini-branch"><b>No: check forms</b><b>Yes: show location</b></div></div>
+              <div class="mini-node decision"><strong>Correct zone?</strong><span>Compare actual zone with rule.</span><div class="mini-branch"><b>No: move</b><b>Yes: close</b></div></div>
+              <div class="mini-node end"><strong>Update movement</strong><span>Save location, quantity, and note.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Open warehouse page</strong><span>System displays occupancy, low stock warnings, misplaced items, and zone status.</span></div></li>
+            <li><div><strong>Search item</strong><span>User enters item code, batch code, or item name into search.</span></div></li>
+            <li><div><strong>Match warehouse records</strong><span>System searches item records and movement history.</span></div></li>
+            <li><div><strong>Display location</strong><span>System shows zone, shelf, quantity, last movement, and current status.</span></div></li>
+            <li><div><strong>Check placement rule</strong><span>System compares actual zone with recommended zone.</span></div></li>
+            <li><div><strong>Resolve issue</strong><span>User confirms movement, accepts AI storage suggestion, or marks alert as false.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If item is not found, system suggests checking import/export forms. If warehouse capacity is above 90%, system blocks new storage suggestion in that zone.</p>
+          </div>
+        </article>
+
+        <article class="flow-card">
+          <h3>Production Line Issue Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Production Manager</span>
+            <span>Module: Production</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Detect line issue, classify root cause, and apply action.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Open production</strong><span>Load line output and machine state.</span></div>
+              <div class="mini-node decision"><strong>Below target?</strong><span>Check efficiency, defects, downtime.</span><div class="mini-branch"><b>No: monitor</b><b>Yes: analyze</b></div></div>
+              <div class="mini-node"><strong>Analyze cause</strong><span>Staffing, material, machine, quality.</span></div>
+              <div class="mini-node action"><strong>Choose action</strong><span>Maintenance, transfer, overtime, adjust target.</span></div>
+              <div class="mini-node end"><strong>Update line</strong><span>Record issue and refresh KPIs.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Open production overview</strong><span>System lists all lines with output, target, efficiency, defect rate, and machine status.</span></div></li>
+            <li><div><strong>Detect low efficiency</strong><span>If efficiency is below 85%, the line is marked warning.</span></div></li>
+            <li><div><strong>Open line detail</strong><span>User reviews downtime, machine status, assigned workers, and defect trend.</span></div></li>
+            <li><div><strong>AI checks causes</strong><span>System checks staffing shortage, material shortage, downtime, and defect rate.</span></div></li>
+            <li><div><strong>Recommended action</strong><span>System suggests maintenance request, worker transfer, overtime, or target adjustment.</span></div></li>
+            <li><div><strong>Manager decides</strong><span>User applies recommendation, creates machine issue report, or keeps monitoring.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If line is stopped, system bypasses low-efficiency recommendation and creates a machine downtime incident immediately.</p>
+          </div>
+        </article>
+
+        <article class="flow-card">
+          <h3>Safety Alert Handling Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Safety Officer</span>
+            <span>Module: Safety + AI Cameras</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Classify camera event, notify owner, and close incident loop.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Detect event</strong><span>Camera sends location and confidence.</span></div>
+              <div class="mini-node decision"><strong>High risk?</strong><span>Check area risk and event type.</span><div class="mini-branch"><b>Low: review</b><b>High: alert</b></div></div>
+              <div class="mini-node"><strong>Create alert</strong><span>Save evidence and notify officer.</span></div>
+              <div class="mini-node action"><strong>Respond</strong><span>Resolve, escalate, dispatch, or false alert.</span></div>
+              <div class="mini-node end"><strong>Update report</strong><span>Incident history and risk stats refresh.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Camera event detected</strong><span>System receives event type, camera location, timestamp, and confidence score.</span></div></li>
+            <li><div><strong>Severity classification</strong><span>Restricted-zone entry becomes high or critical depending on area risk level.</span></div></li>
+            <li><div><strong>Create alert</strong><span>System saves alert and sends notification to Safety Officer and Factory Manager if critical.</span></div></li>
+            <li><div><strong>Review evidence</strong><span>User opens snapshot/log, checks zone, and reads suggested response.</span></div></li>
+            <li><div><strong>Take action</strong><span>User warns worker, dispatches staff, escalates, resolves, or marks false alert.</span></div></li>
+            <li><div><strong>Update safety report</strong><span>System updates incident history and high-risk area statistics.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If confidence score is low, alert status starts as needs review. If repeated events happen in the same area, system raises the risk level.</p>
+          </div>
+        </article>
+
+        <article class="flow-card">
+          <h3>Workforce Planning Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Factory Manager</span>
+            <span>Module: Workforce</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Plan staff, validate feasibility, then publish the shift plan.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Enter inputs</strong><span>Date, target, workers, absences.</span></div>
+              <div class="mini-node"><strong>Load data</strong><span>Skills, line history, availability.</span></div>
+              <div class="mini-node decision"><strong>Enough workers?</strong><span>AI checks coverage against target.</span><div class="mini-branch"><b>No: overtime</b><b>Yes: assign</b></div></div>
+              <div class="mini-node action"><strong>Adjust plan</strong><span>Accept, modify, reject, regenerate.</span></div>
+              <div class="mini-node end"><strong>Publish schedule</strong><span>Save assignments and notify staff.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Enter planning inputs</strong><span>User selects date, target output, available employees, holidays, and absences.</span></div></li>
+            <li><div><strong>Load historical data</strong><span>System loads previous performance by employee, line, and shift.</span></div></li>
+            <li><div><strong>Generate recommendation</strong><span>AI planner suggests workers per line, shift allocation, and overtime needs.</span></div></li>
+            <li><div><strong>Review risk notes</strong><span>System explains staffing gaps, expected output recovery, and overloaded lines.</span></div></li>
+            <li><div><strong>Manager adjusts plan</strong><span>User accepts, modifies employee assignment, or rejects and regenerates.</span></div></li>
+            <li><div><strong>Publish schedule</strong><span>System saves plan and sends notifications to affected employees.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If available employees are not enough, system recommends overtime or target adjustment instead of silently creating an impossible plan.</p>
+          </div>
+        </article>
+
+        <article class="flow-card">
+          <h3>Form Approval Flow</h3>
+          <div class="flow-meta">
+            <span>Actor: Employee + Manager</span>
+            <span>Module: Forms</span>
+            <span>Priority: MVP</span>
+          </div>
+          <div class="mini-activity">
+            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Submit request, route approval, and apply the operational result.</span></div>
+            <div class="mini-flow">
+              <div class="mini-node start"><strong>Create form</strong><span>Leave, overtime, issue, import/export.</span></div>
+              <div class="mini-node"><strong>Validate data</strong><span>Required fields and impact checks.</span></div>
+              <div class="mini-node decision"><strong>Approve?</strong><span>Manager approves, rejects, or asks info.</span><div class="mini-branch"><b>No: return reason</b><b>Yes: apply</b></div></div>
+              <div class="mini-node action"><strong>Apply result</strong><span>Shift, warehouse, issue, notification.</span></div>
+              <div class="mini-node end"><strong>Notify users</strong><span>Requester and stakeholders updated.</span></div>
+            </div>
+          </div>
+          <ol class="flow-steps">
+            <li><div><strong>Create form</strong><span>Employee selects leave, overtime, machine issue, warehouse import, or warehouse export form.</span></div></li>
+            <li><div><strong>Prefill data</strong><span>System fills user, department, line, shift, and date where possible.</span></div></li>
+            <li><div><strong>Validate request</strong><span>System checks required fields and module-specific impact.</span></div></li>
+            <li><div><strong>Submit for approval</strong><span>Form becomes pending and approver receives notification.</span></div></li>
+            <li><div><strong>Manager decision</strong><span>Approver approves, rejects with reason, or requests more information.</span></div></li>
+            <li><div><strong>Apply result</strong><span>System updates schedule, warehouse movement, machine issue, or notification status.</span></div></li>
+          </ol>
+          <div class="branch-box">
+            <strong>Alternate path</strong>
+            <p>If the form affects staffing coverage, system warns the approver before approval. If rejected, requester must receive a reason.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Sequence Diagrams</h2>
+          <p>
+            These sequence diagrams show how users, frontend pages, backend APIs, data storage,
+            and AI logic communicate in important flows.
+          </p>
+        </div>
+        <span class="tag">System interaction</span>
+      </div>
+
+      <div class="sequence-tabs">
+        <article class="sequence-card">
+          <div class="sequence-title">
+            <div>
+              <h3>Safety Alert Sequence</h3>
+              <span>AI camera detects restricted-zone entry and routes it to the safety officer.</span>
+            </div>
+          </div>
+
+          <div class="sequence">
+            <div class="lane">
+              <h4>AI Camera</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 84px; --height: 100px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Frontend</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 166px; --height: 260px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Safety API</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 112px; --height: 340px;"></div>
+            </div>
+            <div class="lane">
+              <h4>AI Service</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 138px; --height: 110px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Database</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 268px; --height: 160px;"></div>
+            </div>
+
+            <div class="message" style="--from: 0; --to: 2; --y: 96px;"><div class="message-line"></div><div class="message-label">Detected restricted zone entry</div></div>
+            <div class="message" style="--from: 2; --to: 3; --y: 138px;"><div class="message-line"></div><div class="message-label">Classify severity</div></div>
+            <div class="message reverse" style="--from: 3; --to: 2; --y: 184px;"><div class="message-line"></div><div class="message-label">Return high/critical result</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 262px;"><div class="message-line"></div><div class="message-label">Save safety alert</div></div>
+            <div class="message" style="--from: 2; --to: 1; --y: 322px;"><div class="message-line"></div><div class="message-label">Push dashboard notification</div></div>
+            <div class="message" style="--from: 1; --to: 2; --y: 392px;"><div class="message-line"></div><div class="message-label">Resolve, escalate, or mark false</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 438px;"><div class="message-line"></div><div class="message-label">Update incident status</div></div>
+          </div>
+        </article>
+
+        <article class="sequence-card">
+          <div class="sequence-title">
+            <div>
+              <h3>Workforce AI Recommendation Sequence</h3>
+              <span>Manager generates a shift plan based on targets, availability, and past performance.</span>
+            </div>
+          </div>
+
+          <div class="sequence">
+            <div class="lane">
+              <h4>Factory Manager</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 84px; --height: 330px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Frontend</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 108px; --height: 390px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Workforce API</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 142px; --height: 330px;"></div>
+            </div>
+            <div class="lane">
+              <h4>AI Planner</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 216px; --height: 120px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Database</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 162px; --height: 310px;"></div>
+            </div>
+
+            <div class="message" style="--from: 0; --to: 1; --y: 94px;"><div class="message-line"></div><div class="message-label">Enter target and planning date</div></div>
+            <div class="message" style="--from: 1; --to: 2; --y: 142px;"><div class="message-line"></div><div class="message-label">Request shift recommendation</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 184px;"><div class="message-line"></div><div class="message-label">Load employees, skills, absences</div></div>
+            <div class="message" style="--from: 2; --to: 3; --y: 226px;"><div class="message-line"></div><div class="message-label">Generate optimized plan</div></div>
+            <div class="message reverse" style="--from: 3; --to: 2; --y: 306px;"><div class="message-line"></div><div class="message-label">Return recommendation</div></div>
+            <div class="message reverse" style="--from: 2; --to: 1; --y: 356px;"><div class="message-line"></div><div class="message-label">Display plan and risk notes</div></div>
+            <div class="message" style="--from: 0; --to: 1; --y: 408px;"><div class="message-line"></div><div class="message-label">Approve or modify plan</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 464px;"><div class="message-line"></div><div class="message-label">Save final shift plan</div></div>
+          </div>
+        </article>
+
+        <article class="sequence-card">
+          <div class="sequence-title">
+            <div>
+              <h3>Form Approval Sequence</h3>
+              <span>Employee submits a form and manager approves or rejects the request.</span>
+            </div>
+          </div>
+
+          <div class="sequence">
+            <div class="lane">
+              <h4>Employee</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 86px; --height: 260px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Frontend</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 116px; --height: 350px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Forms API</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 154px; --height: 320px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Manager</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 312px; --height: 124px;"></div>
+            </div>
+            <div class="lane">
+              <h4>Database</h4>
+              <div class="lifeline"></div>
+              <div class="activation" style="--top: 178px; --height: 304px;"></div>
+            </div>
+
+            <div class="message" style="--from: 0; --to: 1; --y: 98px;"><div class="message-line"></div><div class="message-label">Open form and enter data</div></div>
+            <div class="message" style="--from: 1; --to: 2; --y: 148px;"><div class="message-line"></div><div class="message-label">Submit request</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 194px;"><div class="message-line"></div><div class="message-label">Save pending form</div></div>
+            <div class="message" style="--from: 2; --to: 3; --y: 276px;"><div class="message-line"></div><div class="message-label">Notify approver</div></div>
+            <div class="message" style="--from: 3; --to: 2; --y: 334px;"><div class="message-line"></div><div class="message-label">Approve or reject</div></div>
+            <div class="message" style="--from: 2; --to: 4; --y: 394px;"><div class="message-line"></div><div class="message-label">Update form status</div></div>
+            <div class="message reverse" style="--from: 2; --to: 1; --y: 452px;"><div class="message-line"></div><div class="message-label">Show result notification</div></div>
+          </div>
+        </article>
+      </div>
+
+      <section class="section" style="margin: 24px 0 0; box-shadow: none; background: rgba(255,255,255,0.42);">
+        <div class="section-header">
+          <div>
+            <h2>Sequence Step Details</h2>
+            <p>
+              This table translates the visual sequence diagrams into implementation-level steps,
+              including trigger, endpoint or action, updated data, and expected UI feedback.
+            </p>
+          </div>
+          <span class="tag">Implementation detail</span>
+        </div>
+
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Flow</th>
+              <th>Trigger</th>
+              <th>System Action</th>
+              <th>Data Updated</th>
+              <th>UI Feedback</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Safety Alert</td>
+              <td>AI camera detects a restricted-zone entry.</td>
+              <td>Create alert, classify severity, save incident, notify responsible users.</td>
+              <td>SafetyAlert, CameraEvent, Notification, ReportStats.</td>
+              <td>Critical alert appears on Dashboard and Safety page.</td>
+            </tr>
+            <tr>
+              <td>Safety Alert Resolution</td>
+              <td>Safety officer clicks resolve, escalate, or mark false.</td>
+              <td>Update alert status and append action history.</td>
+              <td>SafetyAlert.status, SafetyAlert.actionHistory, Notification.status.</td>
+              <td>Alert moves from active list to resolved or escalated list.</td>
+            </tr>
+            <tr>
+              <td>Workforce Recommendation</td>
+              <td>Manager enters target and requests AI schedule.</td>
+              <td>Load employee availability, line needs, previous performance, and generate plan.</td>
+              <td>AIRecommendation, temporary ShiftPlan draft.</td>
+              <td>Recommendation panel shows workers per line, risk notes, and overtime suggestion.</td>
+            </tr>
+            <tr>
+              <td>Workforce Approval</td>
+              <td>Manager approves or modifies schedule.</td>
+              <td>Save final plan and notify assigned employees.</td>
+              <td>ShiftPlan, EmployeeAssignment, Notification.</td>
+              <td>Plan status changes to published and employees appear in assigned list.</td>
+            </tr>
+            <tr>
+              <td>Form Submission</td>
+              <td>Employee submits a leave, overtime, machine, or warehouse request.</td>
+              <td>Validate fields, save pending request, notify approver.</td>
+              <td>FormRequest, Notification.</td>
+              <td>Requester sees pending status and approver receives task.</td>
+            </tr>
+            <tr>
+              <td>Form Approval</td>
+              <td>Manager approves or rejects request.</td>
+              <td>Update form status and apply related module effect.</td>
+              <td>FormRequest, related ShiftPlan or GoodsMovement or MachineIssue.</td>
+              <td>Requester receives result notification and related module summary updates.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section" style="margin: 24px 0 0; box-shadow: none; background: rgba(255,255,255,0.42);">
+        <div class="section-header">
+          <div>
+            <h2>Detailed Demo Scenarios</h2>
+            <p>
+              These scenarios can be used for presentation, testing, and feature planning.
+              Each scenario includes preconditions, main path, alternate path, and expected result.
+            </p>
+          </div>
+          <span class="tag">Use case scripts</span>
+        </div>
+
+        <div class="scenario-grid">
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 1</span>
+              <h3>Critical Safety Alert During Operation</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Line B is running normally. Robot Cell 2 is marked as restricted. Safety officer is logged in.</p>
+            </div>
+            <div class="scenario-block danger">
+              <strong>Main path</strong>
+              <p>AI camera detects a worker entering Robot Cell 2, system classifies the event as critical, creates an alert, and shows it on Dashboard.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>User action</strong>
+              <p>Safety officer opens alert detail, reviews timestamp and location, dispatches safety staff, adds note, and marks incident resolved.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Alternate path</strong>
+              <p>If camera confidence is low, the alert is marked needs review instead of critical until the officer confirms it.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Alert status becomes resolved, action history is saved, and safety report counts one restricted-zone incident.</p>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 2</span>
+              <h3>Line Efficiency Drops Below Target</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Line C has target output of 2,000 units but actual output is below plan and efficiency is 78%.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Main path</strong>
+              <p>System marks Line C as warning and AI checks downtime, defect count, staffing, and material status.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>User action</strong>
+              <p>Production manager opens Line C detail and applies AI suggestion to request two additional operators from Line 5.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Alternate path</strong>
+              <p>If the cause is machine downtime instead of staffing, system suggests creating a maintenance request.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Workforce module receives staffing request, Line C recommendation status changes to applied, and dashboard updates risk level.</p>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 3</span>
+              <h3>Warehouse Item Stored in Wrong Zone</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Batch RM-204 should be stored in Raw Material Zone A but is detected in Finished Goods Zone C.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Main path</strong>
+              <p>System creates wrong placement alert, shows expected and actual zone, and notifies warehouse manager.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>User action</strong>
+              <p>Warehouse manager assigns staff to verify, confirms the item is misplaced, and records movement back to Zone A.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Alternate path</strong>
+              <p>If the item was moved intentionally but not recorded, manager updates movement history instead of moving the item.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Alert is resolved, goods movement history is updated, and warehouse occupancy statistics are recalculated.</p>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 4</span>
+              <h3>AI Suggests Night Shift Overtime</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Daily target is behind by 600 units. Night shift has 2 missing operators and 8 available employees.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Main path</strong>
+              <p>Manager opens Workforce page, enters target, and AI suggests moving 2 operators plus 1.5 hours overtime.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>User action</strong>
+              <p>Manager reviews cost impact, modifies one employee assignment, approves the plan, and publishes schedule.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Alternate path</strong>
+              <p>If overtime limit is exceeded, system suggests reducing target or moving workers from lower-priority lines.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Shift plan becomes published, affected employees receive notification, and overtime record appears in reports.</p>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 5</span>
+              <h3>Employee Submits Leave Request</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Employee belongs to Line A morning shift and wants to request leave for tomorrow.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Main path</strong>
+              <p>Employee opens Leave Request, system prefills employee and shift data, and employee submits the form.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>System check</strong>
+              <p>System checks whether Line A still has enough workers if the request is approved.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Manager action</strong>
+              <p>Manager approves if coverage is enough or rejects with reason if the line becomes understaffed.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Employee receives result notification and workforce availability updates if approved.</p>
+            </div>
+          </article>
+
+          <article class="scenario-card">
+            <div>
+              <span class="scenario-pill">Scenario 6</span>
+              <h3>Machine Fault Report Affects Production</h3>
+            </div>
+            <div class="scenario-block">
+              <strong>Precondition</strong>
+              <p>Operator notices abnormal vibration on Press Unit P-14 while Line D is running.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Main path</strong>
+              <p>Operator submits Machine Issue Report with machine id, line, severity, and description.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>System action</strong>
+              <p>System notifies production manager, marks Line D as warning, and creates maintenance task.</p>
+            </div>
+            <div class="scenario-block warning">
+              <strong>Alternate path</strong>
+              <p>If severity is critical, Line D status changes to stopped and dashboard immediately shows production risk.</p>
+            </div>
+            <div class="scenario-block">
+              <strong>Expected result</strong>
+              <p>Issue status is tracked until resolved, downtime is calculated, and production report includes the incident.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="legend">
+        <span><i style="background: var(--accent);"></i> Actor or system lane</span>
+        <span><i style="background: var(--blue);"></i> Request or response message</span>
+        <span><i style="background: var(--warning);"></i> Decision or review point</span>
+        <span><i style="background: var(--danger);"></i> Critical alert path</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

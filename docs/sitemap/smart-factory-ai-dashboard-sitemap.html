@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Factory AI Dashboard Sitemap</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: #fffaf2;
+      --panel-strong: #ffffff;
+      --text: #1f2933;
+      --muted: #5b6773;
+      --line: #cfd8dc;
+      --accent: #0f766e;
+      --accent-soft: #d7f3ef;
+      --accent-2: #d97706;
+      --shadow: 0 18px 40px rgba(31, 41, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(217, 119, 6, 0.14), transparent 22%),
+        linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1500px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(15, 118, 110, 0.95), rgba(17, 94, 89, 0.92));
+      color: #f8fffd;
+      border-radius: 28px;
+      padding: 28px 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -50px -60px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 880px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(248, 255, 253, 0.88);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 18px 0 0;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 13px;
+    }
+
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .diagram {
+      display: grid;
+      gap: 18px;
+    }
+
+    .root-card {
+      background: var(--panel-strong);
+      border: 1px solid rgba(15, 118, 110, 0.18);
+      border-radius: 24px;
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .root-card h2 {
+      margin: 0 0 6px;
+      font-size: 26px;
+    }
+
+    .root-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .root-badge {
+      white-space: nowrap;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .branches {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .branch {
+      position: relative;
+      background: rgba(255, 250, 242, 0.72);
+      border: 1px solid rgba(207, 216, 220, 0.9);
+      border-radius: 22px;
+      padding: 20px 18px 18px;
+      box-shadow: 0 10px 24px rgba(31, 41, 51, 0.05);
+      backdrop-filter: blur(8px);
+    }
+
+    .branch::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: 26px;
+      width: 2px;
+      height: 12px;
+      background: var(--line);
+    }
+
+    .branch h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent);
+    }
+
+    .branch p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .branch ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .branch li {
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid rgba(207, 216, 220, 0.72);
+      font-size: 14px;
+      line-height: 1.4;
+      position: relative;
+      padding-left: 34px;
+    }
+
+    .branch li::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.14);
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(207, 216, 220, 0.9);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .branches {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 20px, 900px);
+        padding-top: 20px;
+      }
+
+      .hero,
+      .root-card,
+      .branch,
+      .footer-note {
+        border-radius: 18px;
+      }
+
+      .root-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .branches {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Smart Factory AI Dashboard Sitemap</h1>
+      <p>
+        A visual site map for a smart factory platform covering operations, warehouse management,
+        production monitoring, AI safety tracking, workforce planning, workflow automation, and reporting.
+      </p>
+      <div class="legend">
+        <span><i style="background:#0f766e"></i> Main platform area</span>
+        <span><i style="background:#d97706"></i> Child page or feature</span>
+        <span><i style="background:#1f2933"></i> Administration and configuration</span>
+      </div>
+    </section>
+
+    <section class="diagram">
+      <article class="root-card">
+        <div>
+          <h2>Smart Factory AI Dashboard</h2>
+          <p>Main web platform for monitoring, decision support, automation, and reporting in a smart factory environment.</p>
+        </div>
+        <div class="root-badge">12 primary sections</div>
+      </article>
+
+      <section class="branches">
+        <article class="branch">
+          <h3>1. Entry and Core Navigation</h3>
+          <p>Pages that let users access the system and understand the overall factory state.</p>
+          <ul>
+            <li>Authentication: Login, Forgot Password, Reset Password, Role Selection</li>
+            <li>Main Dashboard: KPI Overview, Alert Summary, Quick Actions</li>
+            <li>Global Search and Topbar Utilities</li>
+            <li>User Profile and Session Controls</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>2. Warehouse Management</h3>
+          <p>Warehouse tracking and AI-assisted storage optimization.</p>
+          <ul>
+            <li>Warehouse Overview</li>
+            <li>Item Location Tracking</li>
+            <li>Product Search</li>
+            <li>Storage Recommendations</li>
+            <li>Inventory Status</li>
+            <li>Goods Movement History</li>
+            <li>Wrong Placement Alerts</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>3. Production Monitoring</h3>
+          <p>Real-time monitoring of production lines, output, downtime, and defects.</p>
+          <ul>
+            <li>Line Overview</li>
+            <li>Line Detail</li>
+            <li>Output Tracking</li>
+            <li>Downtime Monitoring</li>
+            <li>Defect Monitoring</li>
+            <li>Performance Comparison</li>
+            <li>Historical Performance</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>4. AI Camera Monitoring</h3>
+          <p>Simulated camera-based detection for abnormal events and line issues.</p>
+          <ul>
+            <li>Camera Overview</li>
+            <li>Live Camera Feed</li>
+            <li>Incident Detection Log</li>
+            <li>Restricted Zone Detection</li>
+            <li>Obstacle Detection</li>
+            <li>Alert Severity View</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>5. Safety Management</h3>
+          <p>Risk mapping, incident logging, and AI-based prevention support.</p>
+          <ul>
+            <li>Safety Overview</li>
+            <li>Factory Risk Map</li>
+            <li>Active Safety Alerts</li>
+            <li>Incident Records</li>
+            <li>High-Risk Area Report</li>
+            <li>Early Warning Suggestions</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>6. Productivity Analytics</h3>
+          <p>Data analysis for productivity, trends, defects, and AI recommendations.</p>
+          <ul>
+            <li>Productivity Dashboard</li>
+            <li>Line Productivity Analysis</li>
+            <li>Trend Analysis</li>
+            <li>Peak Efficiency Time Analysis</li>
+            <li>Defect Rate Analysis</li>
+            <li>AI Improvement Suggestions</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>7. Workforce Planning</h3>
+          <p>Shift planning, staffing allocation, and AI scheduling support.</p>
+          <ul>
+            <li>Workforce Overview</li>
+            <li>Shift Planning</li>
+            <li>Overtime Suggestions</li>
+            <li>Employee Allocation by Line</li>
+            <li>Availability and Absence Tracking</li>
+            <li>AI Scheduling Recommendations</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>8. Forms and Workflow</h3>
+          <p>Operational paperwork digitized into trackable electronic workflows.</p>
+          <ul>
+            <li>Forms Overview</li>
+            <li>Leave Request Form</li>
+            <li>Overtime Request Form</li>
+            <li>Machine Issue Report</li>
+            <li>Warehouse Import Request</li>
+            <li>Warehouse Export Request</li>
+            <li>Form Approval Status</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>9. Notifications and Alerts</h3>
+          <p>A unified center for production, safety, staffing, and approval updates.</p>
+          <ul>
+            <li>Notification Center</li>
+            <li>Production Alerts</li>
+            <li>Safety Alerts</li>
+            <li>Staffing Alerts</li>
+            <li>Approval Notifications</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>10. Reports and Statistics</h3>
+          <p>Structured reports for management review and export.</p>
+          <ul>
+            <li>Reports Overview</li>
+            <li>Production Reports</li>
+            <li>Warehouse Reports</li>
+            <li>Safety Reports</li>
+            <li>Workforce Reports</li>
+            <li>Export Reports</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>11. Settings and Administration</h3>
+          <p>System configuration, permissions, thresholds, and AI rule tuning.</p>
+          <ul>
+            <li>User Management</li>
+            <li>Role and Permission Settings</li>
+            <li>Factory Configuration</li>
+            <li>Line Configuration</li>
+            <li>Alert Threshold Settings</li>
+            <li>AI Recommendation Rules</li>
+            <li>Notification Preferences</li>
+          </ul>
+        </article>
+
+        <article class="branch">
+          <h3>12. MVP Version</h3>
+          <p>A reduced version for demo or student project delivery.</p>
+          <ul>
+            <li>Login</li>
+            <li>Dashboard</li>
+            <li>Warehouse Overview</li>
+            <li>Production Overview</li>
+            <li>Safety Alerts</li>
+            <li>Workforce Planning</li>
+            <li>Forms Overview</li>
+            <li>Reports Overview</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="footer-note">
+        This diagram is designed for presentation and planning. You can use it as a reference for UI design,
+        page routing, sidebar navigation, or system module breakdown before implementation.
+      </section>
+    </section>
+  </main>
+</body>
+</html>
