@@ -67,15 +67,17 @@ If SQLite is unavailable, `source` becomes `json-fallback` and the API still ret
 2. If the SQLite file does not exist or has no tables, create it from `database/schema.sql` and `database/seed.sql`.
 3. If SQLite connection, initialization, or query fails, read `database/sample-data.json` instead.
 
-The default connection string is configured in `appsettings.json`:
+The connection string is configured in `appsettings.json`. It uses a fixed absolute path so every launch method (`dotnet run`, Visual Studio, or the compiled `.exe`) reads and writes the same database file on disk:
 
 ```json
 {
 	"ConnectionStrings": {
-		"SmartFactoryDatabase": "Data Source=database/smart_factory_demo.db"
+		"SmartFactoryDatabase": "Data Source=C:\\SmartFactoryData\\smart_factory_demo.db"
 	}
 }
 ```
+
+The backend creates the `C:\SmartFactoryData` folder automatically if it does not exist. Schema and seed files (`database/schema.sql`, `database/seed.sql`) are still read from the project folder; only the live database file is stored at the absolute path above. To keep the database inside the repo instead, change the value to a relative path such as `Data Source=database/smart_factory_demo.db` (resolved against the project folder).
 
 ## MVC Folder Structure
 

@@ -12,6 +12,20 @@ async function getJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function postJson<T>(path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export const factoryApi = {
   getKpis: () => getJson<Kpi[]>('/dashboard/kpis'),
   getProductionLines: () => getJson<ProductionLine[]>('/production/lines'),
@@ -21,5 +35,7 @@ export const factoryApi = {
   getRecommendations: () => getJson<string[]>('/workforce/recommendations'),
   getFormRequests: () => getJson<FormRequest[]>('/forms'),
   getNotifications: () => getJson<NotificationItem[]>('/notifications'),
-  getCameraEvents: () => getJson<CameraEvent[]>('/cameras/events')
+  getCameraEvents: () => getJson<CameraEvent[]>('/cameras/events'),
+  approveForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/approve`, { note }),
+  rejectForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/reject`, { note })
 };

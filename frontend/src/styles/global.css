@@ -112,7 +112,13 @@ button, input { font: inherit; }
 .warehouse-grid { grid-template-columns: 120px minmax(230px, 1.4fr) minmax(180px, 1fr) 80px 120px 120px; }
 .safety-grid { grid-template-columns: minmax(260px, 1.7fr) 110px 150px 120px 90px; }
 .workforce-grid { grid-template-columns: 1fr 1fr 100px 100px 100px 130px; }
-.forms-grid { grid-template-columns: minmax(260px, 1.8fr) 150px 140px 150px 90px; }
+.forms-grid { grid-template-columns: minmax(240px, 1.7fr) 140px 130px 140px 84px 168px; }
+.row-actions { display: flex; gap: 8px; }
+.mini-button { padding: 7px 12px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.mini-button:disabled { opacity: 0.5; cursor: default; }
+.mini-button.approve { color: #f4fffd; background: var(--accent); }
+.mini-button.reject { color: var(--danger); background: var(--danger-soft); }
+.form-action-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; color: var(--danger); background: var(--danger-soft); font-size: 14px; }
 .risk-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 18px; border-radius: 24px; }
 .risk-zone { min-height: 130px; display: grid; place-items: center; text-align: center; border-radius: 18px; font-weight: 700; }
 .risk-zone.normal { background: var(--success-soft); color: var(--success); }

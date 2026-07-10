@@ -4,15 +4,18 @@ interface ApiDataState<T> {
   data: T;
   isLoading: boolean;
   error: string | null;
+  reload: () => void;
 }
 
 export function useApiData<T>(fallbackData: T, loadData: () => Promise<T>): ApiDataState<T> {
   const [data, setData] = useState(fallbackData);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadIndex, setReloadIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoading(true);
 
     loadData()
       .then((nextData) => {
@@ -35,7 +38,7 @@ export function useApiData<T>(fallbackData: T, loadData: () => Promise<T>): ApiD
     return () => {
       isMounted = false;
     };
-  }, [loadData]);
+  }, [loadData, reloadIndex]);
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, reload: () => setReloadIndex((index) => index + 1) };
 }

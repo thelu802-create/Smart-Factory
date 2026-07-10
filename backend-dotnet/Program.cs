@@ -1,3 +1,5 @@
+using SmartFactory.Api.Data;
+using SmartFactory.Api.Repositories;
 using SmartFactory.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,8 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddSingleton<SampleDataService>();
+builder.Services.AddSingleton<DbConnectionFactory>();
+builder.Services.AddScoped<FormsRepository>();
 
 var app = builder.Build();
 
