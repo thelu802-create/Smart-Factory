@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart Factory — Bảng theo dõi tiến độ</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --surface: #ffffff; --ink: #1c2430; --muted: #64748b;
+    --line: #e2e8f0; --accent: #0ea5a2; --accent-ink: #0b7d7b;
+    --done: #16a34a; --done-bg: #dcfce7;
+    --read: #0891b2; --read-bg: #cffafe;
+    --stub: #b45309; --stub-bg: #fef3c7;
+    --mock: #6b7280; --mock-bg: #f1f5f9;
+    --todo: #94a3b8; --todo-bg: #f8fafc;
+    --infra: #2563eb; --infra-bg: #dbeafe;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1420; --surface: #161e2c; --ink: #e6edf5; --muted: #93a4b8;
+      --line: #263141; --accent: #2dd4bf; --accent-ink: #5eead4;
+      --done-bg: #10331f; --read-bg: #0c2f38; --stub-bg: #3a2c0c;
+      --mock-bg: #1e2733; --todo-bg: #1a222e; --infra-bg: #12233f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 0 20px 80px;
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 10; margin: 0 -20px 24px; padding: 14px 24px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .topbar h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
+  .topbar .spacer { flex: 1; }
+  .pill {
+    font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 11px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .dot.live { animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  button.reload {
+    font: inherit; font-size: 13px; cursor: pointer; color: var(--accent-ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px;
+  }
+  button.reload:hover { border-color: var(--accent); }
+  main {
+    max-width: 1040px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+    padding: 34px 42px 46px;
+  }
+  #content h1 { font-size: 28px; margin: 6px 0 4px; }
+  #content h2 {
+    font-size: 20px; margin: 34px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--line);
+  }
+  #content h3 { font-size: 16px; margin: 22px 0 8px; }
+  #content p { margin: 10px 0; }
+  #content a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #content a:hover { border-bottom-color: var(--accent); }
+  #content hr { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+  #content blockquote {
+    margin: 14px 0; padding: 10px 16px; border-left: 4px solid var(--accent);
+    background: var(--bg); border-radius: 0 10px 10px 0; color: var(--muted);
+  }
+  #content ul, #content ol { margin: 10px 0; padding-left: 22px; }
+  #content li { margin: 4px 0; }
+  #content code {
+    font-family: "Cascadia Code", ui-monospace, Consolas, monospace; font-size: 13px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px;
+  }
+  .table-wrap { overflow-x: auto; margin: 14px 0; }
+  #content table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  #content th, #content td {
+    text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top;
+  }
+  #content thead th { background: var(--bg); font-weight: 600; white-space: nowrap; }
+  #content tbody tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  td.st { font-weight: 600; white-space: nowrap; border-radius: 8px; }
+  td.st-done  { color: var(--done);  background: var(--done-bg); }
+  td.st-read  { color: var(--read);  background: var(--read-bg); }
+  td.st-stub  { color: var(--stub);  background: var(--stub-bg); }
+  td.st-mock  { color: var(--mock);  background: var(--mock-bg); }
+  td.st-todo  { color: var(--todo);  background: var(--todo-bg); }
+  td.st-infra { color: var(--infra); background: var(--infra-bg); }
+  .error {
+    max-width: 1040px; margin: 40px auto; padding: 24px 28px; border-radius: 16px;
+    background: var(--stub-bg); color: var(--stub); border: 1px solid var(--line); line-height: 1.7;
+  }
+  .error code { background: rgba(0,0,0,.12); padding: 2px 7px; border-radius: 6px; font-family: monospace; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="dot live"></span>
+    <h1>Smart Factory · Theo dõi tiến độ</h1>
+    <span class="spacer"></span>
+    <span class="pill" id="status">Đang tải…</span>
+    <button class="reload" id="reloadBtn" title="Tải lại ngay">↻ Làm mới</button>
+  </div>
+  <main id="content"><p style="color:var(--muted)">Đang đọc PROGRESS.md…</p></main>
+
+<script>
+const SOURCE = './PROGRESS.md';
+const POLL_MS = 4000;
+let lastText = null;
+
+// --- Mini Markdown renderer (đủ cho PROGRESS.md: heading, hr, quote, list, table, bold, code, link) ---
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function inline(s){
+  s = escapeHtml(s);
+  s = s.replace(/`([^`]+)`/g, (_,c)=>`<code>${c}</code>`);
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return s;
+}
+
+const STATUS_MAP = [
+  ['✅','st-done'], ['🟢','st-read'], ['🟡','st-stub'],
+  ['⚪','st-mock'], ['⬜','st-todo'], ['🔵','st-infra']
+];
+function statusClass(cell){
+  const t = cell.trim();
+  for (const [emo, cls] of STATUS_MAP) if (t.startsWith(emo)) return cls;
+  return null;
+}
+
+function renderTable(rows){
+  const cells = r => r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  const head = cells(rows[0]);
+  const body = rows.slice(2); // rows[1] là dòng phân cách |---|
+  let html = '<div class="table-wrap"><table><thead><tr>';
+  html += head.map(h=>`<th>${inline(h)}</th>`).join('') + '</tr></thead><tbody>';
+  for (const r of body){
+    const cs = cells(r);
+    html += '<tr>' + cs.map(c=>{
+      const cls = statusClass(c);
+      return `<td class="${cls ? 'st '+cls : ''}">${inline(c)}</td>`;
+    }).join('') + '</tr>';
+  }
+  return html + '</tbody></table></div>';
+}
+
+function renderMarkdown(md){
+  const lines = md.replace(/\r\n/g,'\n').split('\n');
+  let html = '', i = 0;
+  while (i < lines.length){
+    let line = lines[i];
+    if (/^#{1,6}\s/.test(line)){
+      const lvl = line.match(/^#+/)[0].length;
+      html += `<h${lvl}>${inline(line.replace(/^#+\s/,''))}</h${lvl}>`; i++; continue;
+    }
+    if (/^(-{3,}|\*{3,})\s*$/.test(line)){ html += '<hr/>'; i++; continue; }
+    if (line.startsWith('>')){
+      const buf = [];
+      while (i < lines.length && lines[i].startsWith('>')){ buf.push(lines[i].replace(/^>\s?/,'')); i++; }
+      html += `<blockquote>${inline(buf.join(' '))}</blockquote>`; continue;
+    }
+    if (line.trim().startsWith('|')){
+      const buf = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')){ buf.push(lines[i].trim()); i++; }
+      html += renderTable(buf); continue;
+    }
+    if (/^\s*[-*]\s+/.test(line)){
+      const buf = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])){ buf.push(inline(lines[i].replace(/^\s*[-*]\s+/,''))); i++; }
+      html += '<ul>' + buf.map(b=>`<li>${b}</li>`).join('') + '</ul>'; continue;
+    }
+    if (/^\s*\d+\.\s+/.test(line)){
+      const buf = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])){ buf.push(inline(lines[i].replace(/^\s*\d+\.\s+/,''))); i++; }
+      html += '<ol>' + buf.map(b=>`<li>${b}</li>`).join('') + '</ol>'; continue;
+    }
+    if (line.trim() === ''){ i++; continue; }
+    // đoạn văn: gộp tới dòng trống
+    const buf = [];
+    while (i < lines.length && lines[i].trim() !== '' && !/^(#{1,6}\s|>|\||\s*[-*]\s|\s*\d+\.\s|-{3,})/.test(lines[i])){
+      buf.push(lines[i]); i++;
+    }
+    html += `<p>${inline(buf.join(' '))}</p>`;
+  }
+  return html;
+}
+
+function nowLabel(){
+  const d = new Date();
+  return d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+async function refresh(force){
+  const statusEl = document.getElementById('status');
+  try {
+    const res = await fetch(SOURCE, {cache:'no-store'});
+    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const text = await res.text();
+    if (force || text !== lastText){
+      lastText = text;
+      document.getElementById('content').innerHTML = renderMarkdown(text);
+    }
+    statusEl.textContent = 'Đồng bộ lúc ' + nowLabel();
+  } catch (err) {
+    statusEl.textContent = 'Lỗi tải file';
+    if (lastText === null){
+      document.body.innerHTML = `<div class="error">
+        <strong>Không đọc được PROGRESS.md.</strong><br/>
+        Trình duyệt chặn <code>fetch</code> khi mở bằng <code>file://</code> (double-click).
+        Hãy phục vụ trang qua một static server rồi mở lại:
+        <ul>
+          <li><strong>VS Code (dễ nhất):</strong> cài extension <em>Live Server</em>, rồi chuột phải vào <code>progress.html</code> → <em>Open with Live Server</em>.</li>
+          <li><strong>Hoặc Node:</strong> tại thư mục <code>C:\\prjTTi</code> chạy <code>npx serve .</code> rồi mở link nó in ra (kèm <code>/progress.html</code>).</li>
+        </ul>
+        Chi tiết lỗi: <code>${escapeHtml(String(err.message))}</code>
+      </div>`;
+    }
+  }
+}
+
+document.getElementById('reloadBtn').addEventListener('click', ()=>refresh(true));
+refresh(true);
+setInterval(()=>refresh(false), POLL_MS);
+</script>
+</body>
+</html>

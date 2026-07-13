@@ -37,5 +37,7 @@ export const factoryApi = {
   getNotifications: () => getJson<NotificationItem[]>('/notifications'),
   getCameraEvents: () => getJson<CameraEvent[]>('/cameras/events'),
   approveForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/approve`, { note }),
-  rejectForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/reject`, { note })
+  rejectForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/reject`, { note }),
+  resolveAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/resolve`, { note }),
+  escalateAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/escalate`, { note })
 };

@@ -19,6 +19,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<SampleDataService>();
 builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<FormsRepository>();
+builder.Services.AddScoped<SafetyRepository>();
 
 var app = builder.Build();
 
