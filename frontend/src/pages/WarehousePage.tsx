@@ -17,6 +17,7 @@ export function WarehousePage() {
   const lowStockWarnings = warehouseItems.filter((item) => item.status === 'Low Stock').length;
 
   const [itemId, setItemId] = useState('');
+  const [itemQuery, setItemQuery] = useState('');
   const [movementType, setMovementType] = useState<MovementType>('Import');
   const [quantity, setQuantity] = useState(1);
   const [toZoneId, setToZoneId] = useState('');
@@ -26,7 +27,15 @@ export function WarehousePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<GoodsMovement[]>([]);
 
-  const selectedId = itemId || warehouseItems[0]?.id || '';
+  const query = itemQuery.trim().toLowerCase();
+  const filteredItems = query
+    ? warehouseItems.filter((item) =>
+        [item.itemCode, item.itemName, item.batchCode, item.bu, item.ioId, item.ioCode]
+          .some((field) => field.toLowerCase().includes(query)))
+    : warehouseItems;
+  const selectedId = itemId && filteredItems.some((item) => item.id === itemId)
+    ? itemId
+    : filteredItems[0]?.id ?? '';
   const selectedItem = warehouseItems.find((item) => item.id === selectedId);
   const targetZones = zones.filter((zone) => zone.name !== selectedItem?.zone);
 
@@ -78,11 +87,18 @@ export function WarehousePage() {
         {error && <p className="form-action-error">{error}</p>}
         {message && <p className="form-action-ok">{message}</p>}
         <div className="move-form">
-          <label>Item
-            <select className="item-select" value={selectedId} onChange={(event) => setItemId(event.target.value)}>
-              {warehouseItems.map((item) => (
-                <option key={item.id} value={item.id}>{item.itemCode} - {item.itemName} (qty {item.quantity}, {item.zone})</option>
-              ))}
+          <label>Find item
+            <input className="item-search" type="text" value={itemQuery} placeholder="code, name, batch, BU, IO…" onChange={(event) => setItemQuery(event.target.value)} />
+          </label>
+          <label>Item{query ? ` (${filteredItems.length} match)` : ''}
+            <select className="item-select" value={selectedId} onChange={(event) => setItemId(event.target.value)} disabled={filteredItems.length === 0}>
+              {filteredItems.length === 0 ? (
+                <option value="">No matching item</option>
+              ) : (
+                filteredItems.map((item) => (
+                  <option key={item.id} value={item.id}>{item.itemCode} - {item.itemName} (qty {item.quantity}, {item.zone})</option>
+                ))
+              )}
             </select>
           </label>
           <label>Type
