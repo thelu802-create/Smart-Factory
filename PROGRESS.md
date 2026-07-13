@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-17
 
 ---
 
@@ -41,7 +41,7 @@ Quick start for testing:
 |---|---|---|---|
 | **Dashboard** | Overall KPIs (output, % of target completed, active lines, safety alerts) + summary | 🟢 Viewable | KPIs computed from real line & alert data |
 | **Production** | Production line table: status, output, efficiency, defect rate, downtime; view one line's detail | 🟢 Viewable | No line-update action yet |
-| **Warehouse** | Inventory table by BU / IO / item code / batch; view one item's detail | 🟢 Viewable | Goods movement (in/out/transfer) not built yet |
+| **Warehouse** | Inventory table + **stock movement form** (Import / Export) | ✅ **Complete** | **Import/Export adjust quantity + record a movement (validated, persisted); Transfer between zones is a follow-up** |
 | **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
 | **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
 | **Workforce** | Shift plan by line + AI recommendations; **generate** button | ✅ **Complete** | **Generate computes gaps from shifts and inserts recommendations; persists across restart** |
@@ -51,7 +51,7 @@ Quick start for testing:
 | **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
 | **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
 
-**Summary:** 4 complete write features (Forms, Safety, Notifications, Workforce), 5 pages showing real data (read-only), **no stub buttons left**, 2 pages still mock.
+**Summary:** 5 complete write features (Forms, Safety, Notifications, Workforce, Warehouse), 4 pages showing real data (read-only), **no stub buttons left**, 2 pages still mock.
 
 ---
 
@@ -68,6 +68,7 @@ Quick start for testing:
 | `GET /cameras/events` | Camera events | 🟢 Real read |
 | `GET /workforce/shifts`, `/workforce/recommendations` | Shifts + recommendations | 🟢 Real read |
 | `POST /workforce/recommendations/generate` | Generate recommendations | ✅ Real write (inserts ai_recommendations from shift gaps) |
+| `POST /warehouse/items/{id}/move` | Stock movement (Import/Export) | ✅ Real write (multi-table transaction + validation) |
 | `GET /forms` | Form list | 🟢 Real read (live) |
 | `POST /forms/{id}/approve`, `/reject` | **Approve / reject form** | ✅ **Real write (transaction)** |
 | `GET /notifications` | Notification list | 🟢 Real read |
@@ -81,7 +82,7 @@ Quick start for testing:
 - 🔵 **On-disk SQLite database** — fixed location `C:\SmartFactoryData\`, auto-creates the folder + seeds on first run, keeps data across restarts.
 - 🔵 **Full 31-table schema** (`schema.sql`) matching the design docs, including the enterprise relationship tables (permissions, io_masters, form_approval_steps, ...).
 - 🔵 **JSON fallback** — if SQLite cannot be opened, the API still returns sample data from `sample-data.json` so the frontend keeps working.
-- 🔵 **Repository pattern** — `DbConnectionFactory` + `FormsRepository` + `SafetyRepository`: a reusable live-read + write template for other modules.
+- 🔵 **Repository pattern** — `DbConnectionFactory` + per-module repositories (Forms, Safety, Notifications, Workforce, Warehouse): a reusable live-read + write template, including multi-table transactions.
 - 🔵 **CORS** allowing the localhost frontend to call the API.
 - 🔵 **Frontend layer** — `factoryApi` (API calls), `useApiData` (auto mock fallback + `reload()` after an action), reusable UI components (KpiCard, Panel, StatusBadge, PageHeader).
 
@@ -108,24 +109,23 @@ Why this strategy:
 > **All stub buttons are now real.** Every action in the app persists to the database. From here the
 > work shifts from "make existing buttons real" to "add new capability and depth."
 
-### ▶ Recommended next: Warehouse — goods movement (in / out / transfer)
+### ▶ Recommended next: Reports — real aggregation
 
-> **What:** record stock movements — a `POST /warehouse/items/{id}/move` (or similar) that inserts a
-> `goods_movements` row and adjusts the item's `quantity` and/or `zone_id`, then the Warehouse table
-> reflects the new state.
-> **Why it's next:** it is the **highest operational value** remaining (inventory accuracy is core to a
-> warehouse) and the right difficulty step now that the write pattern is proven. It is the first
-> **multi-table transaction** — insert the movement *and* update the item atomically, with validation
-> (quantity ≥ 0, valid target zone) — which stretches the repository pattern into real business rules.
-> It also activates the `goods_movements` table, currently schema-only.
+> **What:** wire `ReportsPage` to the API and make `/reports/{module}` **aggregate** real data
+> (totals, averages, trends) instead of re-wrapping the raw list.
+> **Why it's next:** with every write feature done, the database now holds **real, changing data**
+> (approvals, resolutions, generated recommendations, stock movements). Reports turn that data into
+> insight — the natural next value once the data itself is real. It is also read-heavy (safer than more
+> writes) and moves the app from "operate" to "understand." Reports on mock data would have been
+> meaningless; now they aren't.
 
 ### Full backlog
 
 | # | Feature | Why do it (rationale) | Effort |
 |---|---|---|---|
-| 1 | **Warehouse** in/out/transfer | Highest operational value; the first **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Activates a schema-only table. | 🔴 Large |
-| 2 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Now meaningful because there is real write data (approvals, movements) to summarize. | 🟡 Medium |
-| 3 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Warehouse/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
+| 1 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Meaningful now that there is real write data (approvals, movements) to summarize. | 🟡 Medium |
+| 2 | **Warehouse** transfer between zones | Follow-up to Import/Export: move an item to another zone (update `zone_id`, resolve "Wrong Zone"). Needs a zone list + target-zone picker. | 🟡 Medium |
+| 3 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Cameras/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
 | 4 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
 
 > Phase note: the "make every stub button real" phase is **done** — every action persists. The backlog
@@ -139,6 +139,7 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-17 | ✅ **Warehouse stock movement (Import/Export)** now persists (`WarehouseRepository`): a multi-table transaction that inserts `goods_movements` and adjusts `warehouse_items.quantity`, with validation (quantity > 0, no overselling). Added a movement form on the Warehouse page. |
 | 2026-07-16 | ✅ **Workforce generate recommendations** now persists (`WorkforceRepository`): computes shift gaps and inserts `ai_recommendations` (idempotent — replaces prior auto-generated rows). Wired the header Generate button. **All stub buttons are now real.** |
 | 2026-07-15 | ✅ **Notification mark-as-read** now persists to SQLite (`NotificationsRepository`, `status = Read`). Added a Mark-read button on the Notifications page. |
 | 2026-07-14 | ✅ **Safety alert actions (resolve/escalate)** now persist to SQLite (`SafetyRepository`, with `action_note`). Added Resolve/Escalate buttons on the Safety page. Added the progress tracker (`PROGRESS.md` + `progress.html`). |

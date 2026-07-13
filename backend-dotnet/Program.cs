@@ -22,6 +22,7 @@ builder.Services.AddScoped<FormsRepository>();
 builder.Services.AddScoped<SafetyRepository>();
 builder.Services.AddScoped<NotificationsRepository>();
 builder.Services.AddScoped<WorkforceRepository>();
+builder.Services.AddScoped<WarehouseRepository>();
 
 var app = builder.Build();
 

@@ -41,5 +41,7 @@ export const factoryApi = {
   resolveAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/resolve`, { note }),
   escalateAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/escalate`, { note }),
   markNotificationRead: (notificationId: string) => postJson<NotificationItem>(`/notifications/${notificationId}/read`),
-  generateRecommendations: () => postJson<string[]>('/workforce/recommendations/generate')
+  generateRecommendations: () => postJson<string[]>('/workforce/recommendations/generate'),
+  moveWarehouseItem: (itemId: string, movementType: 'Import' | 'Export', quantity: number, note?: string) =>
+    postJson<WarehouseItem>(`/warehouse/items/${itemId}/move`, { movementType, quantity, note })
 };
