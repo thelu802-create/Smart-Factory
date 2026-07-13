@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Panel } from '../components/ui/Panel';
 import { StatusBadge } from '../components/ui/StatusBadge';
@@ -7,16 +8,31 @@ import { useApiData } from '../hooks/useApiData';
 
 export function WorkforcePage() {
   const { data: shiftPlans } = useApiData(mockShifts, factoryApi.getShiftPlans);
-  const { data: aiRecommendations } = useApiData(mockRecommendations, factoryApi.getRecommendations);
+  const { data: aiRecommendations, reload: reloadRecommendations } = useApiData(mockRecommendations, factoryApi.getRecommendations);
+  const [generating, setGenerating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const requiredWorkers = shiftPlans.reduce((total, shift) => total + shift.requiredWorkers, 0);
   const assignedWorkers = shiftPlans.reduce((total, shift) => total + shift.assignedWorkers, 0);
   const coverage = requiredWorkers ? Math.round((assignedWorkers / requiredWorkers) * 100) : 0;
   const workerGap = Math.max(0, requiredWorkers - assignedWorkers);
   const suggestedOvertime = Math.max(...shiftPlans.map((shift) => shift.overtimeHours));
 
+  async function generate() {
+    setGenerating(true);
+    setActionError(null);
+    try {
+      await factoryApi.generateRecommendations();
+      reloadRecommendations();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Action failed');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div className="page-stack">
-      <PageHeader eyebrow="Workforce planning" title="Shift Planning" description="Generate AI-supported shift plans based on production target, employee availability, absences, skills, and previous performance." actionLabel="Generate recommendation" />
+      <PageHeader eyebrow="Workforce planning" title="Shift Planning" description="Generate AI-supported shift plans based on production target, employee availability, absences, skills, and previous performance." actionLabel="Generate recommendation" onAction={generate} actionBusy={generating} />
       <section className="summary-strip">
         <div><span>Coverage</span><strong>{coverage}%</strong></div>
         <div><span>Worker gap</span><strong>{workerGap}</strong></div>
@@ -34,6 +50,7 @@ export function WorkforcePage() {
           </div>
         </Panel>
         <Panel title="AI recommendations" eyebrow="Planner">
+          {actionError && <p className="form-action-error">{actionError}</p>}
           <div className="recommendation-list">
             {aiRecommendations.map((item) => <div className="recommendation-card" key={item}>{item}</div>)}
           </div>

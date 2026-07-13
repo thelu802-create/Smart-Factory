@@ -21,6 +21,7 @@ builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<FormsRepository>();
 builder.Services.AddScoped<SafetyRepository>();
 builder.Services.AddScoped<NotificationsRepository>();
+builder.Services.AddScoped<WorkforceRepository>();
 
 var app = builder.Build();
 

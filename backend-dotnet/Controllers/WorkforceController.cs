@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using SmartFactory.Api.Models.Requests;
+using SmartFactory.Api.Repositories;
 using SmartFactory.Api.Services;
 
 namespace SmartFactory.Api.Controllers;
 
 [ApiController]
 [Route("workforce")]
-public sealed class WorkforceController(SampleDataService data) : ControllerBase
+public sealed class WorkforceController(WorkforceRepository workforce, SampleDataService data) : ControllerBase
 {
     [HttpGet("shifts")]
     public IActionResult GetShifts()
@@ -17,22 +17,19 @@ public sealed class WorkforceController(SampleDataService data) : ControllerBase
     [HttpGet("recommendations")]
     public IActionResult GetRecommendations()
     {
-        return Ok(data.GetRecommendationMessages());
+        // Read live from SQLite when available so generated recommendations are reflected;
+        // fall back to the startup snapshot when running on JSON demo data.
+        return Ok(workforce.IsAvailable() ? workforce.GetRecommendationMessages() : data.GetRecommendationMessages());
     }
 
     [HttpPost("recommendations/generate")]
-    public IActionResult GenerateRecommendation([FromBody] RecommendationRequest payload)
+    public IActionResult GenerateRecommendation()
     {
-        var workerGap = Math.Max(0, 20 - payload.AvailableWorkers);
-        var overtimeHours = payload.TargetOutput > 12000 || workerGap > 0 ? 1.5 : 0;
-
-        return Ok(new
+        if (!workforce.IsAvailable())
         {
-            targetOutput = payload.TargetOutput,
-            availableWorkers = payload.AvailableWorkers,
-            workerGap,
-            overtimeHours,
-            recommendations = data.GetRecommendationMessages().Take(2)
-        });
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Generating recommendations requires the SQLite database." });
+        }
+
+        return Ok(workforce.GenerateRecommendations());
     }
 }

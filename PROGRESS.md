@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-15
+**Last updated:** 2026-07-16
 
 ---
 
@@ -44,14 +44,14 @@ Quick start for testing:
 | **Warehouse** | Inventory table by BU / IO / item code / batch; view one item's detail | 🟢 Viewable | Goods movement (in/out/transfer) not built yet |
 | **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
 | **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
-| **Workforce** | Shift plan by line + AI recommendations; **generate** button | 🟡 Stub button | Viewing works; the generate button **does not persist** |
+| **Workforce** | Shift plan by line + AI recommendations; **generate** button | ✅ **Complete** | **Generate computes gaps from shifts and inserts recommendations; persists across restart** |
 | **Forms** | Approval queue for forms; **Approve / Reject** buttons | ✅ **Complete** | **Approve/reject persists to the DB and stays after a restart** |
 | **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | **Mark-as-read persists to the DB and stays after a restart** |
 | **Reports** | Reporting page by module | ⚪ Mock data | Backend endpoints exist but the frontend is not wired; no real aggregation |
 | **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
 | **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
 
-**Summary:** 3 complete write features (Forms, Safety, Notifications), 5 pages showing real data, 1 action button still a stub, 2 pages still mock.
+**Summary:** 4 complete write features (Forms, Safety, Notifications, Workforce), 5 pages showing real data (read-only), **no stub buttons left**, 2 pages still mock.
 
 ---
 
@@ -67,7 +67,7 @@ Quick start for testing:
 | `POST /safety/alerts/{id}/resolve`, `/escalate` | Resolve / escalate alert | ✅ Real write (status + action_note) |
 | `GET /cameras/events` | Camera events | 🟢 Real read |
 | `GET /workforce/shifts`, `/workforce/recommendations` | Shifts + recommendations | 🟢 Real read |
-| `POST /workforce/recommendations/generate` | Generate recommendations | 🟡 Stub (no persist) |
+| `POST /workforce/recommendations/generate` | Generate recommendations | ✅ Real write (inserts ai_recommendations from shift gaps) |
 | `GET /forms` | Form list | 🟢 Real read (live) |
 | `POST /forms/{id}/approve`, `/reject` | **Approve / reject form** | ✅ **Real write (transaction)** |
 | `GET /notifications` | Notification list | 🟢 Real read |
@@ -105,29 +105,33 @@ Why this strategy:
 - **Defer the "big rocks" (Auth, real Reports) until the write path is proven.** They are large and
   touch everything; doing them last means they sit on a foundation that already works end-to-end.
 
-### ▶ Recommended next: Workforce — generate recommendations
+> **All stub buttons are now real.** Every action in the app persists to the database. From here the
+> work shifts from "make existing buttons real" to "add new capability and depth."
 
-> **What:** `POST /workforce/recommendations/generate` produces staffing suggestions from current shift
-> gaps and **inserts** them into `ai_recommendations`; the Workforce page shows them and they survive a
-> restart.
-> **Why it's next:** it clears the **last remaining stub button**, so every button in the app becomes
-> real. It is also the natural next step up in difficulty — the first flow that **inserts new rows**
-> (not just updates an existing one) and adds a bit of **rule logic** (compute required − assigned
-> workers), extending the pattern beyond single-column updates.
+### ▶ Recommended next: Warehouse — goods movement (in / out / transfer)
+
+> **What:** record stock movements — a `POST /warehouse/items/{id}/move` (or similar) that inserts a
+> `goods_movements` row and adjusts the item's `quantity` and/or `zone_id`, then the Warehouse table
+> reflects the new state.
+> **Why it's next:** it is the **highest operational value** remaining (inventory accuracy is core to a
+> warehouse) and the right difficulty step now that the write pattern is proven. It is the first
+> **multi-table transaction** — insert the movement *and* update the item atomically, with validation
+> (quantity ≥ 0, valid target zone) — which stretches the repository pattern into real business rules.
+> It also activates the `goods_movements` table, currently schema-only.
 
 ### Full backlog
 
 | # | Feature | Why do it (rationale) | Effort |
 |---|---|---|---|
-| 1 | **Workforce** `generate` | Clears the last stub button. Introduces **insert + rule logic** (create `ai_recommendations` rows), a step up from pure updates. | 🟡 Medium |
-| 2 | **Warehouse** in/out/transfer | Highest operational value but the hardest write: **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Best done once the pattern is second nature. | 🔴 Large |
-| 3 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Depends on having real write data to make reports meaningful, so it naturally comes after the write features. | 🟡 Medium |
-| 4 | **Refactor** SampleDataService | Move remaining inline SQL into per-module repositories. Pure cleanup — do it **after** enough modules exist to reveal the right shared abstractions, not before. | 🟡 Medium |
-| 5 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
+| 1 | **Warehouse** in/out/transfer | Highest operational value; the first **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Activates a schema-only table. | 🔴 Large |
+| 2 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Now meaningful because there is real write data (approvals, movements) to summarize. | 🟡 Medium |
+| 3 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Warehouse/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
+| 4 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
 
-> Rule of thumb for reordering: if a stub button exists, prefer making it real (items 1–3) before
-> building new pages or infrastructure (items 4–6). A user trusts an app where **every button does what
-> it says** far more than one with more screens that don't.
+> Phase note: the "make every stub button real" phase is **done** — every action persists. The backlog
+> now moves to **depth** (multi-table business rules in Warehouse), **insight** (real Reports), and
+> **hardening** (repository refactor, then Auth). Keep the same rule of thumb: finish real capability on
+> existing screens before adding new surface.
 
 ---
 
@@ -135,6 +139,7 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-16 | ✅ **Workforce generate recommendations** now persists (`WorkforceRepository`): computes shift gaps and inserts `ai_recommendations` (idempotent — replaces prior auto-generated rows). Wired the header Generate button. **All stub buttons are now real.** |
 | 2026-07-15 | ✅ **Notification mark-as-read** now persists to SQLite (`NotificationsRepository`, `status = Read`). Added a Mark-read button on the Notifications page. |
 | 2026-07-14 | ✅ **Safety alert actions (resolve/escalate)** now persist to SQLite (`SafetyRepository`, with `action_note`). Added Resolve/Escalate buttons on the Safety page. Added the progress tracker (`PROGRESS.md` + `progress.html`). |
 | 2026-07-13 | ✅ **Form approval flow (approve/reject)** persists to SQLite (repository + transaction). Moved the DB to the fixed location `C:\SmartFactoryData`. Added Approve/Reject buttons + `reload()`. |

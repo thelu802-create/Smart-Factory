@@ -40,5 +40,6 @@ export const factoryApi = {
   rejectForm: (formId: string, note?: string) => postJson<FormRequest>(`/forms/${formId}/reject`, { note }),
   resolveAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/resolve`, { note }),
   escalateAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/escalate`, { note }),
-  markNotificationRead: (notificationId: string) => postJson<NotificationItem>(`/notifications/${notificationId}/read`)
+  markNotificationRead: (notificationId: string) => postJson<NotificationItem>(`/notifications/${notificationId}/read`),
+  generateRecommendations: () => postJson<string[]>('/workforce/recommendations/generate')
 };
