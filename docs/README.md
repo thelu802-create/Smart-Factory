@@ -24,6 +24,13 @@ docs/
 
 ## Main Documents
 
+### Development Progress (living status)
+
+The live progress tracker is kept at the repository root (updated whenever a feature is completed):
+
+- [../PROGRESS.md](../PROGRESS.md) — feature/module status, API status, backlog, and changelog.
+- [../progress.html](../progress.html) — a visual, auto-refreshing view of `PROGRESS.md` (open via a static server / VS Code Live Server).
+
 ### Overview
 
 - [overview/smart-factory-ai-dashboard-document.md](overview/smart-factory-ai-dashboard-document.md)
