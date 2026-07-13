@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Smart Factory — Bảng theo dõi tiến độ</title>
+<title>Smart Factory — Development Progress</title>
 <style>
   :root {
     --bg: #f4f6f8; --surface: #ffffff; --ink: #1c2430; --muted: #64748b;
@@ -99,12 +99,12 @@
 <body>
   <div class="topbar">
     <span class="dot live"></span>
-    <h1>Smart Factory · Theo dõi tiến độ</h1>
+    <h1>Smart Factory · Development Progress</h1>
     <span class="spacer"></span>
-    <span class="pill" id="status">Đang tải…</span>
-    <button class="reload" id="reloadBtn" title="Tải lại ngay">↻ Làm mới</button>
+    <span class="pill" id="status">Loading…</span>
+    <button class="reload" id="reloadBtn" title="Reload now">↻ Refresh</button>
   </div>
-  <main id="content"><p style="color:var(--muted)">Đang đọc PROGRESS.md…</p></main>
+  <main id="content"><p style="color:var(--muted)">Reading PROGRESS.md…</p></main>
 
 <script>
 const SOURCE = './PROGRESS.md';
@@ -191,7 +191,7 @@ function renderMarkdown(md){
 
 function nowLabel(){
   const d = new Date();
-  return d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  return d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 }
 
 async function refresh(force){
@@ -204,19 +204,19 @@ async function refresh(force){
       lastText = text;
       document.getElementById('content').innerHTML = renderMarkdown(text);
     }
-    statusEl.textContent = 'Đồng bộ lúc ' + nowLabel();
+    statusEl.textContent = 'Synced at ' + nowLabel();
   } catch (err) {
-    statusEl.textContent = 'Lỗi tải file';
+    statusEl.textContent = 'Load error';
     if (lastText === null){
       document.body.innerHTML = `<div class="error">
-        <strong>Không đọc được PROGRESS.md.</strong><br/>
-        Trình duyệt chặn <code>fetch</code> khi mở bằng <code>file://</code> (double-click).
-        Hãy phục vụ trang qua một static server rồi mở lại:
+        <strong>Could not read PROGRESS.md.</strong><br/>
+        Browsers block <code>fetch</code> when the page is opened via <code>file://</code> (double-click).
+        Serve the page through a static server and reopen it:
         <ul>
-          <li><strong>VS Code (dễ nhất):</strong> cài extension <em>Live Server</em>, rồi chuột phải vào <code>progress.html</code> → <em>Open with Live Server</em>.</li>
-          <li><strong>Hoặc Node:</strong> tại thư mục <code>C:\\prjTTi</code> chạy <code>npx serve .</code> rồi mở link nó in ra (kèm <code>/progress.html</code>).</li>
+          <li><strong>VS Code (easiest):</strong> install the <em>Live Server</em> extension, then right-click <code>progress.html</code> → <em>Open with Live Server</em>.</li>
+          <li><strong>Or Node:</strong> in <code>C:\\prjTTi</code> run <code>npx serve .</code> and open the printed link (append <code>/progress.html</code>).</li>
         </ul>
-        Chi tiết lỗi: <code>${escapeHtml(String(err.message))}</code>
+        Error detail: <code>${escapeHtml(String(err.message))}</code>
       </div>`;
     }
   }

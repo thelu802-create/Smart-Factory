@@ -1,109 +1,109 @@
-# Smart Factory AI Dashboard — Theo Dõi Tiến Độ
+# Smart Factory AI Dashboard — Development Progress
 
-> File tổng hợp tiến độ phát triển để cả nhóm theo dõi được app đang làm tới đâu,
-> mô tả theo **góc nhìn người dùng trên giao diện**. Cập nhật mỗi khi hoàn thành một chức năng.
+> A single file for the whole team to track how far the app has come,
+> described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Cập nhật lần cuối:** 2026-07-14
+**Last updated:** 2026-07-14
 
 ---
 
-## 1. Chú thích trạng thái
+## 1. Status legend
 
-| Ký hiệu | Ý nghĩa |
+| Symbol | Meaning |
 |---|---|
-| ✅ **Hoàn chỉnh** | Chạy thật end-to-end, thao tác **ghi và lưu** xuống database (SQLite trên ổ cứng) |
-| 🟢 **Xem được (read-only)** | Hiển thị dữ liệu thật từ database, nhưng **chưa có thao tác ghi** |
-| 🟡 **Nút giả (stub)** | Có nút/endpoint nhưng bấm vào **không lưu** — trả kết quả cứng, chỉ để demo |
-| ⚪ **Dữ liệu mẫu (mock)** | Trang chỉ dùng dữ liệu mẫu cứng trong frontend, **chưa nối API** |
-| ⬜ **Chưa làm** | Chưa bắt đầu |
+| ✅ **Complete** | Works end-to-end; the action **writes and persists** to the database (SQLite on disk) |
+| 🟢 **Viewable (read-only)** | Displays real data from the database, but **has no write action yet** |
+| 🟡 **Stub button** | A button/endpoint exists but clicking it **does not persist** — returns a hard-coded result, demo only |
+| ⚪ **Mock data** | The page only uses hard-coded mock data in the frontend, **not wired to the API** |
+| ⬜ **Not started** | Not begun |
 
 ---
 
-## 2. Tổng quan hệ thống
+## 2. System overview
 
-- **Frontend:** React + Vite + TypeScript — chạy ở `http://localhost:5173`
-- **Backend:** C# ASP.NET Core Web API — chạy ở `http://localhost:8000`
-- **Database:** SQLite (file thật trên ổ cứng tại `C:\SmartFactoryData\smart_factory_demo.db`), tự seed từ `schema.sql` + `seed.sql`; có fallback JSON khi không mở được DB.
+- **Frontend:** React + Vite + TypeScript — runs at `http://localhost:5173`
+- **Backend:** C# ASP.NET Core Web API — runs at `http://localhost:8000`
+- **Database:** SQLite (a real file on disk at `C:\SmartFactoryData\smart_factory_demo.db`), auto-seeded from `schema.sql` + `seed.sql`; falls back to JSON when the DB cannot be opened.
 
-Cách chạy chi tiết: xem [README.md](README.md) và [backend-dotnet/README.md](backend-dotnet/README.md).
-Cách chạy nhanh để test:
-1. Backend: mở `backend-dotnet` → chạy profile **`SmartFactory.Api`** (VS) hoặc `dotnet run --urls http://localhost:8000`.
-2. Frontend: mở `frontend` → `npm run dev`.
-3. Mở `http://localhost:5173`.
+Full run instructions: see [README.md](README.md) and [backend-dotnet/README.md](backend-dotnet/README.md).
+Quick start for testing:
+1. Backend: open `backend-dotnet` → run the **`SmartFactory.Api`** profile (Visual Studio) or `dotnet run --urls http://localhost:8000`.
+2. Frontend: open `frontend` → `npm run dev`.
+3. Open `http://localhost:5173`.
 
-> ⚠️ Phải chạy **backend trước**. Nếu backend tắt hoặc chạy sai cổng, các trang sẽ tự rơi về dữ liệu mẫu và các nút thao tác sẽ báo "Failed to fetch".
+> ⚠️ Start the **backend first**. If the backend is down or on the wrong port, pages fall back to mock data and action buttons report "Failed to fetch".
 
 ---
 
-## 3. Tiến độ theo chức năng (trang giao diện)
+## 3. Progress by feature (UI pages)
 
-| Trang (menu) | Người dùng nhìn thấy / làm được gì | Trạng thái | Ghi chú |
+| Page (menu) | What the user sees / can do | Status | Notes |
 |---|---|---|---|
-| **Dashboard** | KPI tổng (sản lượng, % hoàn thành mục tiêu, số line đang chạy, cảnh báo an toàn) + tóm tắt | 🟢 Xem được | KPI tính thật từ dữ liệu line & cảnh báo |
-| **Production** | Bảng các dây chuyền: trạng thái, sản lượng, hiệu suất, tỉ lệ lỗi, downtime; xem chi tiết 1 line | 🟢 Xem được | Chưa có thao tác cập nhật line |
-| **Warehouse** | Bảng tồn kho theo BU / IO / mã hàng / lô; xem chi tiết 1 item | 🟢 Xem được | Chưa làm nhập/xuất/chuyển kho (goods movement) |
-| **Safety** | Danh sách cảnh báo an toàn; xem chi tiết; nút **Resolve / Escalate** | ✅ **Hoàn chỉnh** | **Bấm resolve/escalate lưu thật (kèm action_note), giữ nguyên sau restart** |
-| **Cameras** | Nhật ký sự kiện camera AI (loại sự kiện, độ tin cậy, thời gian) | 🟢 Xem được | — |
-| **Workforce** | Kế hoạch ca theo dây chuyền + đề xuất AI; nút **tạo đề xuất** | 🟡 Nút giả | Xem chạy thật; nút generate **chưa lưu** |
-| **Forms** | Hàng chờ duyệt biểu mẫu; nút **Approve / Reject** | ✅ **Hoàn chỉnh** | **Bấm duyệt/từ chối lưu thật xuống DB, giữ nguyên sau khi restart** |
-| **Notifications** | Danh sách thông báo (an toàn, sản xuất, kho, biểu mẫu); đánh dấu **đã đọc** | 🟡 Nút giả | Xem chạy thật; đánh dấu đã đọc **chưa lưu** |
-| **Reports** | Trang báo cáo theo module | ⚪ Dữ liệu mẫu | Backend có endpoint nhưng frontend chưa nối; chưa tổng hợp số liệu thật |
-| **Analytics** | Biểu đồ hiệu suất suy ra từ dữ liệu sản xuất | 🟢 Xem được | Đọc dữ liệu thật, biểu đồ dẫn xuất |
-| **Settings** | Trang cấu hình | ⚪ Dữ liệu mẫu | Tĩnh, chưa có logic |
+| **Dashboard** | Overall KPIs (output, % of target completed, active lines, safety alerts) + summary | 🟢 Viewable | KPIs computed from real line & alert data |
+| **Production** | Production line table: status, output, efficiency, defect rate, downtime; view one line's detail | 🟢 Viewable | No line-update action yet |
+| **Warehouse** | Inventory table by BU / IO / item code / batch; view one item's detail | 🟢 Viewable | Goods movement (in/out/transfer) not built yet |
+| **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
+| **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
+| **Workforce** | Shift plan by line + AI recommendations; **generate** button | 🟡 Stub button | Viewing works; the generate button **does not persist** |
+| **Forms** | Approval queue for forms; **Approve / Reject** buttons | ✅ **Complete** | **Approve/reject persists to the DB and stays after a restart** |
+| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | 🟡 Stub button | Viewing works; mark-as-read **does not persist** |
+| **Reports** | Reporting page by module | ⚪ Mock data | Backend endpoints exist but the frontend is not wired; no real aggregation |
+| **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
+| **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
 
-**Tóm tắt:** 2 chức năng ghi hoàn chỉnh (Forms, Safety), 5 trang xem dữ liệu thật, 2 nút thao tác còn là stub, 2 trang còn mock.
+**Summary:** 2 complete write features (Forms, Safety), 5 pages showing real data, 2 action buttons still stubs, 2 pages still mock.
 
 ---
 
-## 4. Trạng thái API (backend)
+## 4. API status (backend)
 
-| Endpoint | Chức năng | Trạng thái |
+| Endpoint | Function | Status |
 |---|---|---|
-| `GET /health` | Kiểm tra sống + nguồn dữ liệu (sqlite / json) | ✅ |
-| `GET /dashboard/summary`, `/dashboard/kpis`, `/dashboard/alerts` | Số liệu tổng quan | 🟢 Đọc thật |
-| `GET /production/lines`, `/production/lines/{id}` | Dây chuyền + chi tiết | 🟢 Đọc thật |
-| `GET /warehouse/items`, `/warehouse/items/{id}` | Tồn kho + chi tiết | 🟢 Đọc thật |
-| `GET /safety/alerts`, `/safety/alerts/{id}` | Cảnh báo an toàn + chi tiết | 🟢 Đọc thật |
-| `POST /safety/alerts/{id}/resolve`, `/escalate` | Xử lý / leo thang cảnh báo | ✅ Ghi thật (status + action_note) |
-| `GET /cameras/events` | Sự kiện camera | 🟢 Đọc thật |
-| `GET /workforce/shifts`, `/workforce/recommendations` | Ca làm + đề xuất | 🟢 Đọc thật |
-| `POST /workforce/recommendations/generate` | Tạo đề xuất | 🟡 Stub (chưa lưu) |
-| `GET /forms` | Danh sách biểu mẫu | 🟢 Đọc thật (live) |
-| `POST /forms/{id}/approve`, `/reject` | **Duyệt / từ chối biểu mẫu** | ✅ **Ghi thật (transaction)** |
-| `GET /notifications` | Danh sách thông báo | 🟢 Đọc thật |
-| `POST /notifications/{id}/read` | Đánh dấu đã đọc | 🟡 Stub (chưa lưu) |
-| `GET /reports/{module}` | Báo cáo theo module | 🟡 Chỉ gói lại danh sách, chưa tổng hợp |
+| `GET /health` | Liveness + data source (sqlite / json) | ✅ |
+| `GET /dashboard/summary`, `/dashboard/kpis`, `/dashboard/alerts` | Overview metrics | 🟢 Real read |
+| `GET /production/lines`, `/production/lines/{id}` | Lines + detail | 🟢 Real read |
+| `GET /warehouse/items`, `/warehouse/items/{id}` | Inventory + detail | 🟢 Real read |
+| `GET /safety/alerts`, `/safety/alerts/{id}` | Safety alerts + detail | 🟢 Real read |
+| `POST /safety/alerts/{id}/resolve`, `/escalate` | Resolve / escalate alert | ✅ Real write (status + action_note) |
+| `GET /cameras/events` | Camera events | 🟢 Real read |
+| `GET /workforce/shifts`, `/workforce/recommendations` | Shifts + recommendations | 🟢 Real read |
+| `POST /workforce/recommendations/generate` | Generate recommendations | 🟡 Stub (no persist) |
+| `GET /forms` | Form list | 🟢 Real read (live) |
+| `POST /forms/{id}/approve`, `/reject` | **Approve / reject form** | ✅ **Real write (transaction)** |
+| `GET /notifications` | Notification list | 🟢 Real read |
+| `POST /notifications/{id}/read` | Mark as read | 🟡 Stub (no persist) |
+| `GET /reports/{module}` | Report by module | 🟡 Only re-wraps a list, no aggregation |
 
 ---
 
-## 5. Hạ tầng / nền tảng đã có
+## 5. Infrastructure / foundations in place
 
-- 🔵 **Database SQLite trên ổ cứng** — vị trí cố định `C:\SmartFactoryData\`, tự tạo thư mục + seed lần đầu, giữ dữ liệu qua các lần restart.
-- 🔵 **Schema đầy đủ 31 bảng** (`schema.sql`) khớp với tài liệu thiết kế, gồm cả các bảng quan hệ enterprise (permissions, io_masters, form_approval_steps, ...).
-- 🔵 **Fallback JSON** — nếu không mở được SQLite, API vẫn trả dữ liệu mẫu từ `sample-data.json` để frontend không chết.
-- 🔵 **Repository pattern (mới)** — `DbConnectionFactory` + `FormsRepository`: khuôn mẫu đọc live + ghi có transaction, dùng lại được cho các module khác.
-- 🔵 **CORS** cho phép frontend localhost gọi API.
-- 🔵 **Frontend layer** — `factoryApi` (gọi API), `useApiData` (tự fallback mock + `reload()` sau thao tác), component UI dùng lại (KpiCard, Panel, StatusBadge, PageHeader).
-
----
-
-## 6. Việc tiếp theo (backlog, theo thứ tự ưu tiên)
-
-Áp dụng đúng khuôn mẫu đã tạo ở luồng Forms/Safety (`DbConnectionFactory` + Repository):
-
-1. **Notifications** `read` — cập nhật `notifications.status = Read`. (Nhanh nhất tiếp theo.)
-2. **Workforce** `recommendations/generate` — sinh + lưu `ai_recommendations`.
-3. **Warehouse** nhập/xuất/chuyển kho — ghi `goods_movements` + đổi `zone_id`/`quantity`. (Phức tạp hơn.)
-4. **Reports** thật — nối `ReportsPage` vào API, tổng hợp số liệu thay vì gói lại danh sách.
-5. **Refactor** — tách dần SQL trong `SampleDataService` ra các repository theo module.
-6. **Auth/Login** — dùng bảng roles/permissions để đăng nhập + ẩn/hiện menu theo vai trò.
+- 🔵 **On-disk SQLite database** — fixed location `C:\SmartFactoryData\`, auto-creates the folder + seeds on first run, keeps data across restarts.
+- 🔵 **Full 31-table schema** (`schema.sql`) matching the design docs, including the enterprise relationship tables (permissions, io_masters, form_approval_steps, ...).
+- 🔵 **JSON fallback** — if SQLite cannot be opened, the API still returns sample data from `sample-data.json` so the frontend keeps working.
+- 🔵 **Repository pattern** — `DbConnectionFactory` + `FormsRepository` + `SafetyRepository`: a reusable live-read + write template for other modules.
+- 🔵 **CORS** allowing the localhost frontend to call the API.
+- 🔵 **Frontend layer** — `factoryApi` (API calls), `useApiData` (auto mock fallback + `reload()` after an action), reusable UI components (KpiCard, Panel, StatusBadge, PageHeader).
 
 ---
 
-## 7. Nhật ký (changelog)
+## 6. Next up (backlog, by priority)
 
-| Ngày | Nội dung |
+Apply the same template established in the Forms/Safety flows (`DbConnectionFactory` + Repository):
+
+1. **Notifications** `read` — update `notifications.status = Read`. (Fastest next win.)
+2. **Workforce** `recommendations/generate` — generate + persist `ai_recommendations`.
+3. **Warehouse** in/out/transfer — write `goods_movements` + update `zone_id`/`quantity`. (More complex.)
+4. **Reports** for real — wire `ReportsPage` to the API and aggregate data instead of re-wrapping a list.
+5. **Refactor** — gradually move SQL out of `SampleDataService` into per-module repositories.
+6. **Auth/Login** — use the roles/permissions tables for login + role-based menu visibility.
+
+---
+
+## 7. Changelog
+
+| Date | Notes |
 |---|---|
-| 2026-07-14 | ✅ Luồng **xử lý cảnh báo an toàn (Safety resolve/escalate)** ghi thật xuống SQLite (`SafetyRepository`, kèm `action_note`). Thêm nút Resolve/Escalate trên trang Safety. Thêm trang theo dõi tiến độ (`PROGRESS.md` + `progress.html`). |
-| 2026-07-13 | ✅ Luồng **duyệt biểu mẫu (Forms approve/reject)** ghi thật xuống SQLite (repository + transaction). Chuyển DB sang vị trí cố định `C:\SmartFactoryData`. Thêm nút Approve/Reject + `reload()`. |
-| (trước đó) | Khởi tạo dự án: frontend React, backend .NET, schema 31 bảng, seed, các endpoint đọc, fallback JSON. |
+| 2026-07-14 | ✅ **Safety alert actions (resolve/escalate)** now persist to SQLite (`SafetyRepository`, with `action_note`). Added Resolve/Escalate buttons on the Safety page. Added the progress tracker (`PROGRESS.md` + `progress.html`). |
+| 2026-07-13 | ✅ **Form approval flow (approve/reject)** persists to SQLite (repository + transaction). Moved the DB to the fixed location `C:\SmartFactoryData`. Added Approve/Reject buttons + `reload()`. |
+| (earlier) | Project bootstrap: React frontend, .NET backend, 31-table schema, seed data, read endpoints, JSON fallback. |
