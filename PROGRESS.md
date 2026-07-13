@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-14
+**Last updated:** 2026-07-15
 
 ---
 
@@ -46,12 +46,12 @@ Quick start for testing:
 | **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
 | **Workforce** | Shift plan by line + AI recommendations; **generate** button | 🟡 Stub button | Viewing works; the generate button **does not persist** |
 | **Forms** | Approval queue for forms; **Approve / Reject** buttons | ✅ **Complete** | **Approve/reject persists to the DB and stays after a restart** |
-| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | 🟡 Stub button | Viewing works; mark-as-read **does not persist** |
+| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | **Mark-as-read persists to the DB and stays after a restart** |
 | **Reports** | Reporting page by module | ⚪ Mock data | Backend endpoints exist but the frontend is not wired; no real aggregation |
 | **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
 | **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
 
-**Summary:** 2 complete write features (Forms, Safety), 5 pages showing real data, 2 action buttons still stubs, 2 pages still mock.
+**Summary:** 3 complete write features (Forms, Safety, Notifications), 5 pages showing real data, 1 action button still a stub, 2 pages still mock.
 
 ---
 
@@ -71,7 +71,7 @@ Quick start for testing:
 | `GET /forms` | Form list | 🟢 Real read (live) |
 | `POST /forms/{id}/approve`, `/reject` | **Approve / reject form** | ✅ **Real write (transaction)** |
 | `GET /notifications` | Notification list | 🟢 Real read |
-| `POST /notifications/{id}/read` | Mark as read | 🟡 Stub (no persist) |
+| `POST /notifications/{id}/read` | Mark as read | ✅ Real write (status = Read) |
 | `GET /reports/{module}` | Report by module | 🟡 Only re-wraps a list, no aggregation |
 
 ---
@@ -105,25 +105,25 @@ Why this strategy:
 - **Defer the "big rocks" (Auth, real Reports) until the write path is proven.** They are large and
   touch everything; doing them last means they sit on a foundation that already works end-to-end.
 
-### ▶ Recommended next: Notifications — mark as read
+### ▶ Recommended next: Workforce — generate recommendations
 
-> **What:** `POST /notifications/{id}/read` updates `notifications.status = 'Read'`; the bell/list
-> reflects it and it survives a restart.
-> **Why it's next:** it is the **cheapest possible** repeat of the exact Forms/Safety pattern — a single
-> `UPDATE` of one column, no joins, no new concepts. High confidence, ~30 minutes, and it clears one of
-> the two remaining stub buttons. It also unlocks the natural follow-up of an **unread badge** in the
-> top bar, which makes the whole app feel live.
+> **What:** `POST /workforce/recommendations/generate` produces staffing suggestions from current shift
+> gaps and **inserts** them into `ai_recommendations`; the Workforce page shows them and they survive a
+> restart.
+> **Why it's next:** it clears the **last remaining stub button**, so every button in the app becomes
+> real. It is also the natural next step up in difficulty — the first flow that **inserts new rows**
+> (not just updates an existing one) and adds a bit of **rule logic** (compute required − assigned
+> workers), extending the pattern beyond single-column updates.
 
 ### Full backlog
 
 | # | Feature | Why do it (rationale) | Effort |
 |---|---|---|---|
-| 1 | **Notifications** `read` | Cheapest reuse of the proven pattern (one-column `UPDATE`); removes a stub; enables an unread badge. | 🟢 Small |
-| 2 | **Workforce** `generate` | Clears the last stub button. Introduces **insert + rule logic** (create `ai_recommendations` rows), a small step up from pure updates. | 🟡 Medium |
-| 3 | **Warehouse** in/out/transfer | Highest operational value but the hardest write: **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Best done once the pattern is second nature. | 🔴 Large |
-| 4 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Depends on having real write data to make reports meaningful, so it naturally comes after the write features. | 🟡 Medium |
-| 5 | **Refactor** SampleDataService | Move remaining inline SQL into per-module repositories. Pure cleanup — do it **after** enough modules exist to reveal the right shared abstractions, not before. | 🟡 Medium |
-| 6 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
+| 1 | **Workforce** `generate` | Clears the last stub button. Introduces **insert + rule logic** (create `ai_recommendations` rows), a step up from pure updates. | 🟡 Medium |
+| 2 | **Warehouse** in/out/transfer | Highest operational value but the hardest write: **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Best done once the pattern is second nature. | 🔴 Large |
+| 3 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Depends on having real write data to make reports meaningful, so it naturally comes after the write features. | 🟡 Medium |
+| 4 | **Refactor** SampleDataService | Move remaining inline SQL into per-module repositories. Pure cleanup — do it **after** enough modules exist to reveal the right shared abstractions, not before. | 🟡 Medium |
+| 5 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
 
 > Rule of thumb for reordering: if a stub button exists, prefer making it real (items 1–3) before
 > building new pages or infrastructure (items 4–6). A user trusts an app where **every button does what
@@ -135,6 +135,7 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-15 | ✅ **Notification mark-as-read** now persists to SQLite (`NotificationsRepository`, `status = Read`). Added a Mark-read button on the Notifications page. |
 | 2026-07-14 | ✅ **Safety alert actions (resolve/escalate)** now persist to SQLite (`SafetyRepository`, with `action_note`). Added Resolve/Escalate buttons on the Safety page. Added the progress tracker (`PROGRESS.md` + `progress.html`). |
 | 2026-07-13 | ✅ **Form approval flow (approve/reject)** persists to SQLite (repository + transaction). Moved the DB to the fixed location `C:\SmartFactoryData`. Added Approve/Reject buttons + `reload()`. |
 | (earlier) | Project bootstrap: React frontend, .NET backend, 31-table schema, seed data, read endpoints, JSON fallback. |

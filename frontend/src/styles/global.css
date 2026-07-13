@@ -96,6 +96,7 @@ button, input { font: inherit; }
 .data-row, .recommendation-card { padding: 14px 16px; border-radius: 18px; background: var(--surface-strong); border: 1px solid rgba(48,61,74,0.08); }
 .data-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .data-row.three-col { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
+.data-row.four-col { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .data-row strong, .data-row small { display: block; }
 .data-row small, .recommendation-card { color: var(--muted); line-height: 1.45; }
 .summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; border-radius: 22px; }
@@ -156,5 +157,5 @@ button, input { font: inherit; }
   .page-surface, .topbar { padding-left: 16px; padding-right: 16px; }
   .kpi-grid, .dashboard-grid, .summary-strip, .camera-grid, .report-grid, .settings-grid, .risk-map { grid-template-columns: 1fr; }
   .panel-wide { grid-column: span 1; }
-  .data-row, .data-row.three-col { grid-template-columns: 1fr; display: grid; align-items: start; }
+  .data-row, .data-row.three-col, .data-row.four-col { grid-template-columns: 1fr; display: grid; align-items: start; }
 }

@@ -20,6 +20,7 @@ builder.Services.AddSingleton<SampleDataService>();
 builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<FormsRepository>();
 builder.Services.AddScoped<SafetyRepository>();
+builder.Services.AddScoped<NotificationsRepository>();
 
 var app = builder.Build();
 
