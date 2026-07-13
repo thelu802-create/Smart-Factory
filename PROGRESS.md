@@ -87,16 +87,47 @@ Quick start for testing:
 
 ---
 
-## 6. Next up (backlog, by priority)
+## 6. Next up (backlog, with rationale)
 
-Apply the same template established in the Forms/Safety flows (`DbConnectionFactory` + Repository):
+### Guiding principle
 
-1. **Notifications** `read` — update `notifications.status = Read`. (Fastest next win.)
-2. **Workforce** `recommendations/generate` — generate + persist `ai_recommendations`.
-3. **Warehouse** in/out/transfer — write `goods_movements` + update `zone_id`/`quantity`. (More complex.)
-4. **Reports** for real — wire `ReportsPage` to the API and aggregate data instead of re-wrapping a list.
-5. **Refactor** — gradually move SQL out of `SampleDataService` into per-module repositories.
-6. **Auth/Login** — use the roles/permissions tables for login + role-based menu visibility.
+We build one **vertical write-slice at a time** (button → API → repository → DB → visible on reload),
+ordered by **value ÷ effort**, and we **reuse the pattern** proven in Forms/Safety
+(`DbConnectionFactory` + Repository) rather than inventing new plumbing each time.
+
+Why this strategy:
+- **Turn stubs into real actions before adding new surface.** Every 🟡 stub button is a promise to the
+  user that currently lies. Making existing buttons real builds a trustworthy app faster than adding
+  more half-working screens.
+- **Cheap wins first keep momentum and de-risk the pattern.** Each repeat of the repository pattern is
+  faster and confirms it generalizes, so by the time we hit a hard module (Warehouse) the mechanics are
+  boring and reliable.
+- **Defer the "big rocks" (Auth, real Reports) until the write path is proven.** They are large and
+  touch everything; doing them last means they sit on a foundation that already works end-to-end.
+
+### ▶ Recommended next: Notifications — mark as read
+
+> **What:** `POST /notifications/{id}/read` updates `notifications.status = 'Read'`; the bell/list
+> reflects it and it survives a restart.
+> **Why it's next:** it is the **cheapest possible** repeat of the exact Forms/Safety pattern — a single
+> `UPDATE` of one column, no joins, no new concepts. High confidence, ~30 minutes, and it clears one of
+> the two remaining stub buttons. It also unlocks the natural follow-up of an **unread badge** in the
+> top bar, which makes the whole app feel live.
+
+### Full backlog
+
+| # | Feature | Why do it (rationale) | Effort |
+|---|---|---|---|
+| 1 | **Notifications** `read` | Cheapest reuse of the proven pattern (one-column `UPDATE`); removes a stub; enables an unread badge. | 🟢 Small |
+| 2 | **Workforce** `generate` | Clears the last stub button. Introduces **insert + rule logic** (create `ai_recommendations` rows), a small step up from pure updates. | 🟡 Medium |
+| 3 | **Warehouse** in/out/transfer | Highest operational value but the hardest write: **multi-table transaction** (insert `goods_movements` + adjust `warehouse_items.quantity`/`zone_id`) with validation. Best done once the pattern is second nature. | 🔴 Large |
+| 4 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Depends on having real write data to make reports meaningful, so it naturally comes after the write features. | 🟡 Medium |
+| 5 | **Refactor** SampleDataService | Move remaining inline SQL into per-module repositories. Pure cleanup — do it **after** enough modules exist to reveal the right shared abstractions, not before. | 🟡 Medium |
+| 6 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
+
+> Rule of thumb for reordering: if a stub button exists, prefer making it real (items 1–3) before
+> building new pages or infrastructure (items 4–6). A user trusts an app where **every button does what
+> it says** far more than one with more screens that don't.
 
 ---
 

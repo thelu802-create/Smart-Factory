@@ -14,6 +14,7 @@
     --mock: #6b7280; --mock-bg: #f1f5f9;
     --todo: #94a3b8; --todo-bg: #f8fafc;
     --infra: #2563eb; --infra-bg: #dbeafe;
+    --hard: #dc2626; --hard-bg: #fee2e2;
     --shadow: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
   }
   @media (prefers-color-scheme: dark) {
@@ -21,7 +22,7 @@
       --bg: #0e1420; --surface: #161e2c; --ink: #e6edf5; --muted: #93a4b8;
       --line: #263141; --accent: #2dd4bf; --accent-ink: #5eead4;
       --done-bg: #10331f; --read-bg: #0c2f38; --stub-bg: #3a2c0c;
-      --mock-bg: #1e2733; --todo-bg: #1a222e; --infra-bg: #12233f;
+      --mock-bg: #1e2733; --todo-bg: #1a222e; --infra-bg: #12233f; --hard-bg: #3a1414;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
     }
   }
@@ -89,6 +90,7 @@
   td.st-mock  { color: var(--mock);  background: var(--mock-bg); }
   td.st-todo  { color: var(--todo);  background: var(--todo-bg); }
   td.st-infra { color: var(--infra); background: var(--infra-bg); }
+  td.st-hard  { color: var(--hard);  background: var(--hard-bg); }
   .error {
     max-width: 1040px; margin: 40px auto; padding: 24px 28px; border-radius: 16px;
     background: var(--stub-bg); color: var(--stub); border: 1px solid var(--line); line-height: 1.7;
@@ -124,7 +126,7 @@ function inline(s){
 
 const STATUS_MAP = [
   ['✅','st-done'], ['🟢','st-read'], ['🟡','st-stub'],
-  ['⚪','st-mock'], ['⬜','st-todo'], ['🔵','st-infra']
+  ['⚪','st-mock'], ['⬜','st-todo'], ['🔵','st-infra'], ['🔴','st-hard']
 ];
 function statusClass(cell){
   const t = cell.trim();
