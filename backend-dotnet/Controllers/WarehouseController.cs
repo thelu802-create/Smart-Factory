@@ -43,6 +43,22 @@ public sealed class WarehouseController(WarehouseRepository warehouse, SampleDat
         return item is null ? NotFound(new { detail = "Warehouse item not found" }) : Ok(item);
     }
 
+    [HttpGet("zones")]
+    public IActionResult GetZones()
+    {
+        return warehouse.IsAvailable()
+            ? Ok(warehouse.GetZones())
+            : Ok(Array.Empty<WarehouseZoneDto>());
+    }
+
+    [HttpGet("items/{itemId}/movements")]
+    public IActionResult GetMovements(string itemId)
+    {
+        return warehouse.IsAvailable()
+            ? Ok(warehouse.GetMovements(itemId))
+            : Ok(Array.Empty<GoodsMovementDto>());
+    }
+
     [HttpPost("items/{itemId}/move")]
     public IActionResult MoveItem(string itemId, [FromBody] MoveWarehouseRequest request)
     {
@@ -51,7 +67,7 @@ public sealed class WarehouseController(WarehouseRepository warehouse, SampleDat
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Warehouse movements require the SQLite database." });
         }
 
-        var result = warehouse.Move(itemId, request?.MovementType, request?.Quantity ?? 0, request?.Note);
+        var result = warehouse.Move(itemId, request?.MovementType, request?.Quantity ?? 0, request?.ToZoneId, request?.Note);
         return result.Status switch
         {
             "not_found" => NotFound(new { detail = result.Error }),

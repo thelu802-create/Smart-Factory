@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-17
+**Last updated:** 2026-07-18
 
 ---
 
@@ -41,7 +41,7 @@ Quick start for testing:
 |---|---|---|---|
 | **Dashboard** | Overall KPIs (output, % of target completed, active lines, safety alerts) + summary | 🟢 Viewable | KPIs computed from real line & alert data |
 | **Production** | Production line table: status, output, efficiency, defect rate, downtime; view one line's detail | 🟢 Viewable | No line-update action yet |
-| **Warehouse** | Inventory table + **stock movement form** (Import / Export) | ✅ **Complete** | **Import/Export adjust quantity + record a movement (validated, persisted); Transfer between zones is a follow-up** |
+| **Warehouse** | Inventory table + **movement form** (Import / Export / Transfer) + per-item **movement history** | ✅ **Complete** | **Movements adjust quantity/zone, recompute item status + zone usage/status, record history — all validated & persisted** |
 | **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
 | **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
 | **Workforce** | Shift plan by line + AI recommendations; **generate** button | ✅ **Complete** | **Generate computes gaps from shifts and inserts recommendations; persists across restart** |
@@ -68,7 +68,9 @@ Quick start for testing:
 | `GET /cameras/events` | Camera events | 🟢 Real read |
 | `GET /workforce/shifts`, `/workforce/recommendations` | Shifts + recommendations | 🟢 Real read |
 | `POST /workforce/recommendations/generate` | Generate recommendations | ✅ Real write (inserts ai_recommendations from shift gaps) |
-| `POST /warehouse/items/{id}/move` | Stock movement (Import/Export) | ✅ Real write (multi-table transaction + validation) |
+| `GET /warehouse/zones` | Zone list (for transfer picker) | 🟢 Real read |
+| `GET /warehouse/items/{id}/movements` | Per-item movement history | 🟢 Real read |
+| `POST /warehouse/items/{id}/move` | Movement (Import/Export/Transfer) | ✅ Real write (multi-table txn + status/zone recompute) |
 | `GET /forms` | Form list | 🟢 Real read (live) |
 | `POST /forms/{id}/approve`, `/reject` | **Approve / reject form** | ✅ **Real write (transaction)** |
 | `GET /notifications` | Notification list | 🟢 Real read |
@@ -124,7 +126,7 @@ Why this strategy:
 | # | Feature | Why do it (rationale) | Effort |
 |---|---|---|---|
 | 1 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Meaningful now that there is real write data (approvals, movements) to summarize. | 🟡 Medium |
-| 2 | **Warehouse** transfer between zones | Follow-up to Import/Export: move an item to another zone (update `zone_id`, resolve "Wrong Zone"). Needs a zone list + target-zone picker. | 🟡 Medium |
+| 2 | **Auto-alerts** from warehouse | Low Stock / Wrong Zone movements create a `notifications` row (Warehouse → Notifications, cross-page). Small once the write pattern exists. | 🟡 Medium |
 | 3 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Cameras/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
 | 4 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
 
@@ -139,6 +141,7 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-18 | ✅ **Warehouse full movement model**: added Transfer between zones, automatic recompute of item status (Low Stock / Correct / Wrong Zone) and zone usage+status after every movement, and per-item movement history (`GET /warehouse/zones`, `GET /warehouse/items/{id}/movements`). |
 | 2026-07-17 | ✅ **Warehouse stock movement (Import/Export)** now persists (`WarehouseRepository`): a multi-table transaction that inserts `goods_movements` and adjusts `warehouse_items.quantity`, with validation (quantity > 0, no overselling). Added a movement form on the Warehouse page. |
 | 2026-07-16 | ✅ **Workforce generate recommendations** now persists (`WorkforceRepository`): computes shift gaps and inserts `ai_recommendations` (idempotent — replaces prior auto-generated rows). Wired the header Generate button. **All stub buttons are now real.** |
 | 2026-07-15 | ✅ **Notification mark-as-read** now persists to SQLite (`NotificationsRepository`, `status = Read`). Added a Mark-read button on the Notifications page. |

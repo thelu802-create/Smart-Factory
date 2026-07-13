@@ -52,6 +52,25 @@ export interface WarehouseItem {
   lastMovementAt: string;
 }
 
+export interface WarehouseZone {
+  id: string;
+  name: string;
+  zoneType: string;
+  capacity: number;
+  currentUsage: number;
+  status: string;
+}
+
+export interface GoodsMovement {
+  id: string;
+  movementType: string;
+  quantity: number;
+  fromZone: string | null;
+  toZone: string;
+  movedAt: string;
+  note: string;
+}
+
 export interface ShiftPlan {
   id: string;
   shiftName: string;

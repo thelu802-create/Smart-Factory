@@ -1,4 +1,4 @@
-import type { CameraEvent, FormRequest, Kpi, NotificationItem, ProductionLine, SafetyAlert, ShiftPlan, WarehouseItem } from '../types';
+import type { CameraEvent, FormRequest, GoodsMovement, Kpi, NotificationItem, ProductionLine, SafetyAlert, ShiftPlan, WarehouseItem, WarehouseZone } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -42,6 +42,8 @@ export const factoryApi = {
   escalateAlert: (alertId: string, note?: string) => postJson<SafetyAlert>(`/safety/alerts/${alertId}/escalate`, { note }),
   markNotificationRead: (notificationId: string) => postJson<NotificationItem>(`/notifications/${notificationId}/read`),
   generateRecommendations: () => postJson<string[]>('/workforce/recommendations/generate'),
-  moveWarehouseItem: (itemId: string, movementType: 'Import' | 'Export', quantity: number, note?: string) =>
-    postJson<WarehouseItem>(`/warehouse/items/${itemId}/move`, { movementType, quantity, note })
+  getWarehouseZones: () => getJson<WarehouseZone[]>('/warehouse/zones'),
+  getItemMovements: (itemId: string) => getJson<GoodsMovement[]>(`/warehouse/items/${itemId}/movements`),
+  moveWarehouseItem: (itemId: string, movementType: 'Import' | 'Export' | 'Transfer', quantity: number, toZoneId?: string, note?: string) =>
+    postJson<WarehouseItem>(`/warehouse/items/${itemId}/move`, { movementType, quantity, toZoneId, note })
 };
