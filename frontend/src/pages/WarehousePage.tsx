@@ -18,6 +18,7 @@ export function WarehousePage() {
 
   const [itemId, setItemId] = useState('');
   const [itemQuery, setItemQuery] = useState('');
+  const [tableQuery, setTableQuery] = useState('');
   const [page, setPage] = useState(0);
   const [movementType, setMovementType] = useState<MovementType>('Import');
   const [quantity, setQuantity] = useState(1);
@@ -40,10 +41,22 @@ export function WarehousePage() {
   const selectedItem = warehouseItems.find((item) => item.id === selectedId);
   const targetZones = zones.filter((zone) => zone.name !== selectedItem?.zone);
 
+  const tableSearch = tableQuery.trim().toLowerCase();
+  const tableItems = tableSearch
+    ? warehouseItems.filter((item) =>
+        [item.itemCode, item.itemName, item.batchCode, item.bu, item.ioId, item.ioCode, item.zone, item.status]
+          .some((field) => field.toLowerCase().includes(tableSearch)))
+    : warehouseItems;
+
   const PAGE_SIZE = 6;
-  const totalPages = Math.max(1, Math.ceil(warehouseItems.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(tableItems.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
-  const pagedItems = warehouseItems.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const pagedItems = tableItems.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+
+  function onTableSearch(value: string) {
+    setTableQuery(value);
+    setPage(0);
+  }
 
   useEffect(() => {
     if (!selectedId) return;
@@ -151,10 +164,15 @@ export function WarehousePage() {
           )}
         </div>
       </Panel>
-      <Panel title="Item location tracking" eyebrow="Inventory" action="Search item" wide>
+      <Panel title="Item location tracking" eyebrow="Inventory" wide>
+        <div className="table-toolbar">
+          <input className="table-search" type="text" value={tableQuery} placeholder="Search inventory (code, name, BU, IO, zone, status)…" onChange={(event) => onTableSearch(event.target.value)} />
+        </div>
         <div className="data-table">
           <div className="table-head warehouse-grid"><span>BU / IO</span><span>Item</span><span>Zone</span><span>Qty</span><span>Status</span><span>Last movement</span></div>
-          {pagedItems.map((item) => (
+          {pagedItems.length === 0 ? (
+            <div className="table-empty">No items match "{tableQuery}".</div>
+          ) : pagedItems.map((item) => (
             <div className="table-row warehouse-grid" key={item.id}>
               <span><strong>{item.bu}</strong><small>{item.ioId} - {item.ioCode}</small></span>
               <span><strong>{item.itemCode}</strong><small>{item.itemName} - {item.batchCode}</small></span>
@@ -166,7 +184,9 @@ export function WarehousePage() {
           ))}
         </div>
         <div className="pagination">
-          <span className="pagination-info">{warehouseItems.length} items - page {currentPage + 1} of {totalPages}</span>
+          <span className="pagination-info">
+            {tableSearch ? `${tableItems.length} of ${warehouseItems.length} items` : `${warehouseItems.length} items`} - page {currentPage + 1} of {totalPages}
+          </span>
           <button className="pager-button" type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Prev</button>
           <button className="pager-button" type="button" disabled={currentPage >= totalPages - 1} onClick={() => setPage(currentPage + 1)}>Next →</button>
         </div>

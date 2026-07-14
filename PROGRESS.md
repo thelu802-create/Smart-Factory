@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-18
+**Last updated:** 2026-07-19
 
 ---
 
@@ -41,12 +41,12 @@ Quick start for testing:
 |---|---|---|---|
 | **Dashboard** | Overall KPIs (output, % of target completed, active lines, safety alerts) + summary | 🟢 Viewable | KPIs computed from real line & alert data |
 | **Production** | Production line table: status, output, efficiency, defect rate, downtime; view one line's detail | 🟢 Viewable | No line-update action yet |
-| **Warehouse** | Inventory table + **movement form** (Import / Export / Transfer) + per-item **movement history** | ✅ **Complete** | **Movements adjust quantity/zone, recompute item status + zone usage/status, record history — all validated & persisted** |
+| **Warehouse** | **Searchable + paginated** inventory + **movement form** (Import / Export / Transfer) + per-item **movement history** | ✅ **Complete** | Movements adjust quantity/zone, recompute status + zone usage, record history, and **auto-raise a notification on Low Stock / Wrong Zone** — validated & persisted |
 | **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
 | **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
 | **Workforce** | Shift plan by line + AI recommendations; **generate** button | ✅ **Complete** | **Generate computes gaps from shifts and inserts recommendations; persists across restart** |
 | **Forms** | Approval queue for forms; **Approve / Reject** buttons | ✅ **Complete** | **Approve/reject persists to the DB and stays after a restart** |
-| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | **Mark-as-read persists to the DB and stays after a restart** |
+| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | Mark-as-read persists; **warehouse movements now auto-create alerts here (cross-page)** |
 | **Reports** | Reporting page by module | ⚪ Mock data | Backend endpoints exist but the frontend is not wired; no real aggregation |
 | **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
 | **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
@@ -126,9 +126,8 @@ Why this strategy:
 | # | Feature | Why do it (rationale) | Effort |
 |---|---|---|---|
 | 1 | **Reports** for real | Wire `ReportsPage` to the API and **aggregate** (sums/trends) instead of re-wrapping lists. Meaningful now that there is real write data (approvals, movements) to summarize. | 🟡 Medium |
-| 2 | **Auto-alerts** from warehouse | Low Stock / Wrong Zone movements create a `notifications` row (Warehouse → Notifications, cross-page). Small once the write pattern exists. | 🟡 Medium |
-| 3 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Cameras/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
-| 4 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
+| 2 | **Refactor** SampleDataService | Move remaining inline read SQL into per-module repositories (Production/Cameras/etc.), matching the write repositories already built. Cleanup best done now that the pattern is established. | 🟡 Medium |
+| 3 | **Auth / Login** | Use `roles`/`permissions` for login + role-based menus. A cross-cutting "big rock" that should sit on a **working, persisted** app — so it comes last. | 🔴 Large |
 
 > Phase note: the "make every stub button real" phase is **done** — every action persists. The backlog
 > now moves to **depth** (multi-table business rules in Warehouse), **insight** (real Reports), and
@@ -141,6 +140,7 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-19 | ✅ **Warehouse inventory search + pagination** on the table; **auto-alerts** — a movement that turns an item Low Stock or Wrong Zone now inserts a Warehouse notification (only on status transition, no duplicates), visible on the Notifications page. |
 | 2026-07-18 | ✅ **Warehouse full movement model**: added Transfer between zones, automatic recompute of item status (Low Stock / Correct / Wrong Zone) and zone usage+status after every movement, and per-item movement history (`GET /warehouse/zones`, `GET /warehouse/items/{id}/movements`). |
 | 2026-07-17 | ✅ **Warehouse stock movement (Import/Export)** now persists (`WarehouseRepository`): a multi-table transaction that inserts `goods_movements` and adjusts `warehouse_items.quantity`, with validation (quantity > 0, no overselling). Added a movement form on the Warehouse page. |
 | 2026-07-16 | ✅ **Workforce generate recommendations** now persists (`WorkforceRepository`): computes shift gaps and inserts `ai_recommendations` (idempotent — replaces prior auto-generated rows). Wired the header Generate button. **All stub buttons are now real.** |

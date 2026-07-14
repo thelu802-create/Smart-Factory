@@ -95,10 +95,12 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
         int currentQuantity;
         string currentZoneId;
         string category;
+        string itemCode;
+        string oldStatus;
         using (var read = connection.CreateCommand())
         {
             read.Transaction = transaction;
-            read.CommandText = "SELECT quantity, zone_id, category FROM warehouse_items WHERE id = $id";
+            read.CommandText = "SELECT quantity, zone_id, category, item_code, status FROM warehouse_items WHERE id = $id";
             read.Parameters.AddWithValue("$id", itemId);
             using var reader = read.ExecuteReader();
             if (!reader.Read())
@@ -109,6 +111,8 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
             currentQuantity = reader.GetInt32(0);
             currentZoneId = reader.GetString(1);
             category = reader.GetString(2);
+            itemCode = reader.GetString(3);
+            oldStatus = reader.GetString(4);
         }
 
         int newQuantity = currentQuantity;
@@ -208,6 +212,13 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
             insert.ExecuteNonQuery();
         }
 
+        // Raise a warehouse notification when a movement pushes the item into a
+        // problem status it was not already in (avoids repeat alerts on every move).
+        if (newStatus != oldStatus && (newStatus == "Low Stock" || newStatus == "Wrong Zone"))
+        {
+            RaiseStatusNotification(connection, transaction, itemId, itemCode, newStatus, movedAt);
+        }
+
         transaction.Commit();
         return new MoveResult("ok", null, ReadItems(connection, itemId).FirstOrDefault());
     }
@@ -305,6 +316,36 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
         command.Transaction = transaction;
         command.CommandText = "SELECT id FROM users ORDER BY id LIMIT 1";
         return (string?)command.ExecuteScalar() ?? "user-001";
+    }
+
+    // Prefer a Warehouse-department user as the notification target, else any user.
+    private static string WarehouseUserId(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT id FROM users WHERE department = 'Warehouse' ORDER BY id LIMIT 1";
+        return (string?)command.ExecuteScalar() ?? FirstUserId(connection, transaction);
+    }
+
+    private static void RaiseStatusNotification(SqliteConnection connection, SqliteTransaction transaction, string itemId, string itemCode, string status, string createdAt)
+    {
+        var (title, severity) = status == "Low Stock"
+            ? ($"Low stock: {itemCode}", "Medium")
+            : ($"Wrong placement: {itemCode}", "High");
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO notifications (id, title, notification_type, severity, status, target_user_id, related_entity_type, related_entity_id, created_at)
+            VALUES ($id, $title, 'Warehouse', $severity, 'Unread', $userId, 'WarehouseItem', $itemId, $createdAt)
+            """;
+        command.Parameters.AddWithValue("$id", "noti-wh-" + Guid.NewGuid().ToString("N"));
+        command.Parameters.AddWithValue("$title", title);
+        command.Parameters.AddWithValue("$severity", severity);
+        command.Parameters.AddWithValue("$userId", WarehouseUserId(connection, transaction));
+        command.Parameters.AddWithValue("$itemId", itemId);
+        command.Parameters.AddWithValue("$createdAt", createdAt);
+        command.ExecuteNonQuery();
     }
 
     private static List<WarehouseItemDto> ReadItems(SqliteConnection connection, string? itemId = null)
