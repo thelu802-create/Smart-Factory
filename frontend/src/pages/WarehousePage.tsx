@@ -18,6 +18,7 @@ export function WarehousePage() {
 
   const [itemId, setItemId] = useState('');
   const [itemQuery, setItemQuery] = useState('');
+  const [page, setPage] = useState(0);
   const [movementType, setMovementType] = useState<MovementType>('Import');
   const [quantity, setQuantity] = useState(1);
   const [toZoneId, setToZoneId] = useState('');
@@ -38,6 +39,11 @@ export function WarehousePage() {
     : filteredItems[0]?.id ?? '';
   const selectedItem = warehouseItems.find((item) => item.id === selectedId);
   const targetZones = zones.filter((zone) => zone.name !== selectedItem?.zone);
+
+  const PAGE_SIZE = 6;
+  const totalPages = Math.max(1, Math.ceil(warehouseItems.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages - 1);
+  const pagedItems = warehouseItems.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -148,7 +154,7 @@ export function WarehousePage() {
       <Panel title="Item location tracking" eyebrow="Inventory" action="Search item" wide>
         <div className="data-table">
           <div className="table-head warehouse-grid"><span>BU / IO</span><span>Item</span><span>Zone</span><span>Qty</span><span>Status</span><span>Last movement</span></div>
-          {warehouseItems.map((item) => (
+          {pagedItems.map((item) => (
             <div className="table-row warehouse-grid" key={item.id}>
               <span><strong>{item.bu}</strong><small>{item.ioId} - {item.ioCode}</small></span>
               <span><strong>{item.itemCode}</strong><small>{item.itemName} - {item.batchCode}</small></span>
@@ -158,6 +164,11 @@ export function WarehousePage() {
               <span>{item.lastMovementAt}</span>
             </div>
           ))}
+        </div>
+        <div className="pagination">
+          <span className="pagination-info">{warehouseItems.length} items - page {currentPage + 1} of {totalPages}</span>
+          <button className="pager-button" type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Prev</button>
+          <button className="pager-button" type="button" disabled={currentPage >= totalPages - 1} onClick={() => setPage(currentPage + 1)}>Next →</button>
         </div>
       </Panel>
     </div>

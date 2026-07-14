@@ -134,6 +134,10 @@ button, input { font: inherit; }
 .movement-empty { color: var(--muted); font-size: 14px; margin: 0; }
 .movement-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px 14px; align-items: center; padding: 9px 12px; border-radius: 12px; background: var(--surface-strong); box-shadow: inset 0 0 0 1px var(--line); margin-bottom: 6px; font-size: 14px; }
 .movement-row small { grid-column: 1 / -1; color: var(--muted); }
+.pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+.pagination-info { margin-right: auto; color: var(--muted); font-size: 14px; }
+.pager-button { padding: 8px 14px; border: 0; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--accent-dark); background: var(--surface-strong); box-shadow: inset 0 0 0 1px var(--line); }
+.pager-button:disabled { opacity: 0.45; cursor: default; }
 .risk-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 18px; border-radius: 24px; }
 .risk-zone { min-height: 130px; display: grid; place-items: center; text-align: center; border-radius: 18px; font-weight: 700; }
 .risk-zone.normal { background: var(--success-soft); color: var(--success); }
