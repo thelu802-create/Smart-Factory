@@ -5,14 +5,15 @@ import { Panel } from '../components/ui/Panel';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { factoryApi } from '../api/factoryApi';
 import { useApiData } from '../hooks/useApiData';
-import { aiRecommendations as mockRecommendations, formRequests as mockForms, kpis as mockKpis, productionLines as mockLines, safetyAlerts as mockAlerts, warehouseItems as mockItems } from '../data/mockData';
+import { formRequests as mockForms, kpis as mockKpis, productionLines as mockLines, safetyAlerts as mockAlerts, warehouseItems as mockItems } from '../data/mockData';
+import type { Recommendation } from '../types';
 
 export function DashboardPage() {
   const { data: kpis } = useApiData(mockKpis, factoryApi.getKpis);
   const { data: productionLines } = useApiData(mockLines, factoryApi.getProductionLines);
   const { data: safetyAlerts } = useApiData(mockAlerts, factoryApi.getSafetyAlerts);
   const { data: warehouseItems } = useApiData(mockItems, factoryApi.getWarehouseItems);
-  const { data: aiRecommendations } = useApiData(mockRecommendations, factoryApi.getRecommendations);
+  const { data: aiRecommendations } = useApiData<Recommendation[]>([], factoryApi.getRecommendations);
   const { data: formRequests } = useApiData(mockForms, factoryApi.getFormRequests);
 
   return (
@@ -77,7 +78,12 @@ export function DashboardPage() {
 
         <Panel title="AI shift planner" eyebrow="Workforce" action="Adjust schedule" wide>
           <div className="recommendation-list">
-            {aiRecommendations.slice(0, 3).map((item) => <div className="recommendation-card" key={item}>{item}</div>)}
+            {aiRecommendations.slice(0, 3).map((item, index) => (
+              <div className="recommendation-card" key={`${item.title}-${index}`}>
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
+            ))}
           </div>
         </Panel>
 
