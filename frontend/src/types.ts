@@ -108,4 +108,38 @@ export interface CameraEvent {
   severity: Severity;
   confidence: number;
   time: string;
+  alertId?: string | null;
+}
+
+export interface CameraDetectionResult {
+  event: CameraEvent;
+  alertRaised: boolean;
+  alertId: string | null;
+}
+
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  department: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+}
+
+export interface Recommendation {
+  title: string;
+  detail: string;
+}
+
+export interface BatchDecisionResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: { id: string; status: string; error: string | null }[];
 }
