@@ -1,27 +1,36 @@
 using Microsoft.AspNetCore.Mvc;
-using SmartFactory.Api.Services;
+using SmartFactory.Api.Models.Requests;
+using SmartFactory.Api.Repositories;
 
 namespace SmartFactory.Api.Controllers;
 
 [ApiController]
 [Route("cameras")]
-public sealed class CamerasController(SampleDataService data) : ControllerBase
+public sealed class CamerasController(CameraRepository cameras) : ControllerBase
 {
     [HttpGet]
     public IActionResult GetCameras()
     {
-        return Ok(new[]
-        {
-            new { id = "cam-01", name = "Robot Cell 2", status = "Active" },
-            new { id = "cam-02", name = "Warehouse Zone C", status = "Active" },
-            new { id = "cam-03", name = "Line C", status = "Active" },
-            new { id = "cam-04", name = "Storage Room B", status = "Active" }
-        });
+        return Ok(cameras.GetCameras());
     }
 
     [HttpGet("events")]
     public IActionResult GetEvents()
     {
-        return Ok(data.GetCameraEvents());
+        return Ok(cameras.GetEvents());
+    }
+
+    [HttpPost("detect")]
+    public IActionResult Detect([FromBody] CameraDetectionRequest? request)
+    {
+        if (!cameras.IsAvailable())
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Camera detection requires the SmartFactory database." });
+        }
+
+        var result = cameras.Detect(request?.CameraCode, request?.EventType, request?.Severity, request?.Confidence);
+        return result.Status == "invalid"
+            ? BadRequest(new { detail = result.Error })
+            : Ok(new { @event = result.Event, alertRaised = result.AlertRaised, alertId = result.AlertId });
     }
 }

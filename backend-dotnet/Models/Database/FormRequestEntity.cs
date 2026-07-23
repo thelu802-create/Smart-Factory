@@ -11,4 +11,8 @@ public sealed class FormRequestEntity
     public string? ApprovedAt { get; set; }
     public string Summary { get; set; } = string.Empty;
     public string? RejectionReason { get; set; }
+
+    // Set for "Warehouse Borrow" forms: the stock that is auto-deducted on approval.
+    public string? RelatedItemId { get; set; }
+    public int? RelatedQuantity { get; set; }
 }

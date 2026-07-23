@@ -10,7 +10,13 @@ INSERT INTO users (id, full_name, email, role_id, department, status, created_at
 ('user-002', 'Tran Anh', 'production@factory.local', 'role-production-manager', 'Production', 'Active', '2026-07-03T08:00:00'),
 ('user-003', 'Le Hoa', 'warehouse@factory.local', 'role-warehouse-manager', 'Warehouse', 'Active', '2026-07-03T08:00:00'),
 ('user-004', 'Pham Linh', 'safety@factory.local', 'role-safety-officer', 'Safety', 'Active', '2026-07-03T08:00:00'),
-('user-005', 'Nguyen Minh', 'employee@factory.local', 'role-employee', 'Packaging', 'Active', '2026-07-03T08:00:00');
+('user-005', 'Nguyen Minh', 'employee@factory.local', 'role-employee', 'Packaging', 'Active', '2026-07-03T08:00:00'),
+('user-006', 'Vo Thanh', 'thanh@factory.local', 'role-employee', 'Production', 'Active', '2026-07-04T08:00:00'),
+('user-007', 'Dang Hue', 'hue@factory.local', 'role-employee', 'Quality', 'Active', '2026-07-04T08:00:00'),
+('user-008', 'Ho Nam', 'namho@factory.local', 'role-production-manager', 'Production', 'Active', '2026-07-05T08:00:00'),
+('user-009', 'Ly Mai', 'mai@factory.local', 'role-warehouse-manager', 'Warehouse', 'Inactive', '2026-07-05T08:00:00'),
+('user-010', 'Phan Duc', 'duc@factory.local', 'role-safety-officer', 'Safety', 'Active', '2026-07-06T08:00:00'),
+('user-011', 'Tran Yen', 'yen@factory.local', 'role-employee', 'Packaging', 'Active', '2026-07-06T08:00:00');
 
 INSERT INTO permissions (id, permission_code, module, action, description) VALUES
 ('perm-dashboard-view', 'DASHBOARD_VIEW', 'Dashboard', 'View', 'View dashboard KPIs and operational summary'),
@@ -42,6 +48,25 @@ INSERT INTO factory_areas (id, name, area_type, risk_level, description) VALUES
 ('area-robot', 'Robot Cell 2', 'Safety', 'Critical', 'Restricted robot automation cell'),
 ('area-warehouse-c', 'Warehouse Zone C', 'Warehouse', 'Medium', 'Finished goods and outbound staging'),
 ('area-storage-b', 'Storage Room B', 'Warehouse', 'High', 'Temperature sensitive storage room');
+
+INSERT INTO cameras (camera_code, name, area_id, status) VALUES
+('CAM-01', 'Robot Cell 2', 'area-robot', 'Active'),
+('CAM-02', 'Warehouse Zone C', 'area-warehouse-c', 'Active'),
+('CAM-03', 'Line C', 'area-final', 'Active'),
+('CAM-04', 'Storage Room B', 'area-storage-b', 'Active');
+
+INSERT INTO app_settings (setting_key, setting_value, value_type, category, description, updated_at) VALUES
+('camera.auto_alert_confidence', '0.80', 'number', 'Camera', 'Minimum confidence (0-1) for a detection to auto-raise a safety alert.', '2026-07-21T00:00:00'),
+('camera.allowed_severities', 'Low,Medium,High,Critical', 'list', 'Camera', 'Severity values accepted by camera detection input.', '2026-07-21T00:00:00'),
+('camera.alert_severities', 'High,Critical', 'list', 'Camera', 'Severities that (with enough confidence) auto-raise a safety alert.', '2026-07-21T00:00:00'),
+('warehouse.low_stock_threshold', '100', 'number', 'Warehouse', 'Item quantity at or below which status becomes Low Stock.', '2026-07-21T00:00:00'),
+('warehouse.zone_warning_ratio', '0.95', 'number', 'Warehouse', 'Zone usage ratio (0-1) at or above which zone status becomes Warning.', '2026-07-21T00:00:00'),
+('warehouse.zone_near_capacity_ratio', '0.85', 'number', 'Warehouse', 'Zone usage ratio (0-1) at or above which zone status becomes Near Capacity.', '2026-07-21T00:00:00'),
+('dashboard.target_completion_warning', '90', 'number', 'Dashboard', 'Target completion percent below which the KPI shows a warning.', '2026-07-21T00:00:00'),
+('forms.default_requester', 'user-005', 'string', 'Forms', 'User id used as requester when a form is created without one.', '2026-07-21T00:00:00'),
+('forms.approver.default', 'user-001', 'string', 'Forms', 'Default approver (leave/overtime/other) - Factory Manager.', '2026-07-21T00:00:00'),
+('forms.approver.machine', 'user-002', 'string', 'Forms', 'Approver for machine-related forms - Production Manager.', '2026-07-21T00:00:00'),
+('forms.approver.warehouse', 'user-003', 'string', 'Forms', 'Approver for warehouse/import/export forms - Warehouse Manager.', '2026-07-21T00:00:00');
 
 INSERT INTO production_lines (id, name, area_id, status, target_output, actual_output, efficiency, defect_rate, downtime_minutes, assigned_workers, issue) VALUES
 ('line-a', 'Line A', 'area-assembly', 'Normal', 2200, 2140, 97, 1.8, 4, 24, 'Running normally'),
@@ -129,7 +154,14 @@ INSERT INTO employees (id, employee_code, full_name, department, skill_tags, ava
 ('emp-002', 'E-1002', 'Tran Quoc', 'Production', 'Assembly,Line C,Machine Setup', 'Available', 'line-c'),
 ('emp-003', 'E-1003', 'Le Van', 'Production', 'Press,Maintenance Support', 'Busy', 'line-d'),
 ('emp-004', 'E-1004', 'Hoang Mai', 'Quality', 'Inspection,Final Assembly', 'Available', 'line-c'),
-('emp-005', 'E-1005', 'Pham Nhi', 'Warehouse', 'Inventory,Forklift', 'Available', NULL);
+('emp-005', 'E-1005', 'Pham Nhi', 'Warehouse', 'Inventory,Forklift', 'Available', NULL),
+('emp-006', 'E-1006', 'Vu Ha', 'Production', 'Assembly,Line C,Final Assembly', 'Available', 'line-c'),
+('emp-007', 'E-1007', 'Do Nam', 'Production', 'Line C,Machine Setup', 'Available', NULL),
+('emp-008', 'E-1008', 'Bui Thu', 'Quality', 'Inspection,Line C', 'Available', 'line-c'),
+('emp-009', 'E-1009', 'Ngo Kim', 'Production', 'Press,Line D', 'Available', 'line-d'),
+('emp-010', 'E-1010', 'Ly Phong', 'Production', 'Assembly,Line C', 'Available', NULL),
+('emp-011', 'E-1011', 'Trinh Lan', 'Packaging', 'Packaging,Line B', 'Busy', 'line-b'),
+('emp-012', 'E-1012', 'Cao Son', 'Production', 'Line C,Night Shift', 'Available', 'line-c');
 
 INSERT INTO skills (id, skill_code, skill_name, skill_group) VALUES
 ('skill-packaging', 'PACKAGING', 'Packaging Operation', 'Production'),

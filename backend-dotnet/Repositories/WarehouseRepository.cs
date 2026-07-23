@@ -1,86 +1,105 @@
-using Microsoft.Data.Sqlite;
-using SmartFactory.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using SmartFactory.Api.Models;
+using SmartFactory.Api.Models.Database;
+using SmartFactory.Api.Data;
+using SmartFactory.Api.Services;
 
 namespace SmartFactory.Api.Repositories;
 
 /// <summary>
-/// Live SQLite access for the warehouse module. Records stock movements as a
-/// multi-table transaction: inserts a goods_movements row, adjusts the item's
-/// quantity/zone, recomputes the item status and the affected zones' usage/status,
-/// all atomically and with validation.
+/// EF Core access for the warehouse module. Records stock movements as a
+/// transaction: inserts a goods_movements row, adjusts the item's quantity/zone,
+/// recomputes the item status and the affected zones' usage/status, all atomically
+/// and with validation. Auto-raises a notification on a Low Stock / Wrong Zone
+/// transition.
 /// </summary>
-public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
+public sealed class WarehouseRepository(SmartFactoryDbContext context, AppSettingsService settings)
 {
     /// <summary>Result of a move: Status is "ok", "not_found", or "invalid".</summary>
     public sealed record MoveResult(string Status, string? Error, WarehouseItemDto? Item);
 
-    // Recompute thresholds. LowStock chosen so it reproduces the seed statuses exactly.
-    private const int LowStockThreshold = 100;
-    private const double WarningRatio = 0.95;
-    private const double NearCapacityRatio = 0.85;
+    // Fallback thresholds, used only when the matching app_settings row is missing.
+    private const int DefaultLowStockThreshold = 100;
+    private const double DefaultWarningRatio = 0.95;
+    private const double DefaultNearCapacityRatio = 0.85;
 
-    public bool IsAvailable() => connectionFactory.IsAvailable();
+    public bool IsAvailable() => context.Database.CanConnect();
 
     public IReadOnlyList<WarehouseItemDto> GetItems()
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        return ReadItems(connection);
+        return (from item in context.WarehouseItems
+                join zone in context.WarehouseZones on item.ZoneId equals zone.Id
+                orderby item.ItemCode
+                select new { item, ZoneName = zone.Name })
+            .AsEnumerable()
+            .Select(row => ToDto(row.item, row.ZoneName))
+            .ToList();
     }
 
     public WarehouseItemDto? GetItem(string itemId)
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        return ReadItems(connection, itemId).FirstOrDefault();
+        var row = (from item in context.WarehouseItems
+                   join zone in context.WarehouseZones on item.ZoneId equals zone.Id
+                   where item.Id == itemId
+                   select new { item, ZoneName = zone.Name })
+            .FirstOrDefault();
+        return row is null ? null : ToDto(row.item, row.ZoneName);
     }
 
     public IReadOnlyList<WarehouseZoneDto> GetZones()
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, name, zone_type, capacity, current_usage, status FROM warehouse_zones ORDER BY name";
-        using var reader = command.ExecuteReader();
-        var zones = new List<WarehouseZoneDto>();
-        while (reader.Read())
-        {
-            zones.Add(new WarehouseZoneDto(reader.GetString(0), reader.GetString(1), reader.GetString(2),
-                reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
-        }
-
-        return zones;
+        return context.WarehouseZones
+            .OrderBy(zone => zone.Name)
+            .Select(zone => new WarehouseZoneDto(zone.Id, zone.Name, zone.ZoneType, zone.Capacity, zone.CurrentUsage, zone.Status))
+            .ToList();
     }
 
     public IReadOnlyList<GoodsMovementDto> GetMovements(string itemId)
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT m.id, m.movement_type, m.quantity, zf.name, zt.name, m.moved_at, m.note
-            FROM goods_movements m
-            LEFT JOIN warehouse_zones zf ON zf.id = m.from_zone_id
-            JOIN warehouse_zones zt ON zt.id = m.to_zone_id
-            WHERE m.item_id = $id
-            ORDER BY m.moved_at DESC
-            """;
-        command.Parameters.AddWithValue("$id", itemId);
-        using var reader = command.ExecuteReader();
-        var movements = new List<GoodsMovementDto>();
-        while (reader.Read())
-        {
-            movements.Add(new GoodsMovementDto(
-                reader.GetString(0),
-                reader.GetString(1),
-                reader.GetInt32(2),
-                reader.IsDBNull(3) ? null : reader.GetString(3),
-                reader.GetString(4),
-                TimeValue(reader.GetString(5)),
-                reader.GetString(6)));
-        }
-
-        return movements;
+        return (from movement in context.GoodsMovements
+                where movement.ItemId == itemId
+                join zt in context.WarehouseZones on movement.ToZoneId equals zt.Id
+                join zf in context.WarehouseZones on movement.FromZoneId equals zf.Id into fromJoin
+                from zf in fromJoin.DefaultIfEmpty()
+                orderby movement.MovedAt descending
+                select new { movement, ToName = zt.Name, FromName = zf != null ? zf.Name : null })
+            .AsEnumerable()
+            .Select(row => new GoodsMovementDto(
+                row.movement.Id,
+                row.movement.MovementType,
+                row.movement.Quantity,
+                row.FromName,
+                row.ToName,
+                TimeValue(row.movement.MovedAt),
+                row.movement.Note))
+            .ToList();
     }
 
+    /// <summary>
+    /// Records a stock movement in its own transaction. See <see cref="ApplyMove"/> for
+    /// the version that participates in a caller-managed transaction.
+    /// </summary>
     public MoveResult Move(string itemId, string? movementType, int quantity, string? toZoneId, string? note)
+    {
+        using var transaction = context.Database.BeginTransaction();
+        var result = ApplyMove(itemId, movementType, quantity, toZoneId, note);
+        if (result.Status != "ok")
+        {
+            return result; // transaction rolls back on dispose
+        }
+
+        context.SaveChanges();
+        transaction.Commit();
+        return new MoveResult("ok", null, GetItem(itemId));
+    }
+
+    /// <summary>
+    /// Validates and applies a stock movement to the tracked entities WITHOUT opening a
+    /// transaction or calling SaveChanges — the caller owns the transaction and commit.
+    /// Lets the forms module deduct borrowed stock inside the same transaction as the
+    /// approval. Returns Item = null on success (query it after the caller commits).
+    /// </summary>
+    public MoveResult ApplyMove(string itemId, string? movementType, int quantity, string? toZoneId, string? note)
     {
         var type = (movementType ?? string.Empty).Trim();
         if (type != "Import" && type != "Export" && type != "Transfer")
@@ -88,37 +107,25 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
             return new MoveResult("invalid", "movementType must be 'Import', 'Export', or 'Transfer'.", null);
         }
 
-        using var connection = connectionFactory.CreateOpenConnection();
-        using var transaction = connection.BeginTransaction();
+        // Recompute thresholds come from app_settings (fall back to the defaults).
+        var lowStockThreshold = settings.GetInt("warehouse.low_stock_threshold", DefaultLowStockThreshold);
+        var warningRatio = settings.GetDouble("warehouse.zone_warning_ratio", DefaultWarningRatio);
+        var nearCapacityRatio = settings.GetDouble("warehouse.zone_near_capacity_ratio", DefaultNearCapacityRatio);
 
-        // Read current item state.
-        int currentQuantity;
-        string currentZoneId;
-        string category;
-        string itemCode;
-        string oldStatus;
-        using (var read = connection.CreateCommand())
+        var item = context.WarehouseItems.FirstOrDefault(row => row.Id == itemId);
+        if (item is null)
         {
-            read.Transaction = transaction;
-            read.CommandText = "SELECT quantity, zone_id, category, item_code, status FROM warehouse_items WHERE id = $id";
-            read.Parameters.AddWithValue("$id", itemId);
-            using var reader = read.ExecuteReader();
-            if (!reader.Read())
-            {
-                return new MoveResult("not_found", "Warehouse item not found.", null);
-            }
-
-            currentQuantity = reader.GetInt32(0);
-            currentZoneId = reader.GetString(1);
-            category = reader.GetString(2);
-            itemCode = reader.GetString(3);
-            oldStatus = reader.GetString(4);
+            return new MoveResult("not_found", "Warehouse item not found.", null);
         }
 
-        int newQuantity = currentQuantity;
-        string effectiveZoneId = currentZoneId;
+        var currentQuantity = item.Quantity;
+        var currentZoneId = item.ZoneId;
+        var oldStatus = item.Status;
+
+        int newQuantity;
+        var effectiveZoneId = currentZoneId;
         int movementQuantity;
-        object fromZone;
+        string? fromZone;
         string toZone;
 
         if (type == "Import")
@@ -130,9 +137,9 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
 
             newQuantity = currentQuantity + quantity;
             movementQuantity = quantity;
-            fromZone = DBNull.Value;
+            fromZone = null;
             toZone = currentZoneId;
-            AdjustZone(connection, transaction, currentZoneId, quantity);
+            AdjustZone(currentZoneId, quantity, warningRatio, nearCapacityRatio);
         }
         else if (type == "Export")
         {
@@ -150,7 +157,7 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
             movementQuantity = quantity;
             fromZone = currentZoneId;
             toZone = currentZoneId;
-            AdjustZone(connection, transaction, currentZoneId, -quantity);
+            AdjustZone(currentZoneId, -quantity, warningRatio, nearCapacityRatio);
         }
         else // Transfer: relocate the whole item to another zone.
         {
@@ -165,71 +172,56 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
                 return new MoveResult("invalid", "Transfer target zone must differ from the current zone.", null);
             }
 
-            if (!ZoneExists(connection, transaction, target))
+            if (!context.WarehouseZones.Any(zone => zone.Id == target))
             {
                 return new MoveResult("invalid", "Target zone does not exist.", null);
             }
 
+            newQuantity = currentQuantity;
             effectiveZoneId = target;
             movementQuantity = currentQuantity;
             fromZone = currentZoneId;
             toZone = target;
-            AdjustZone(connection, transaction, currentZoneId, -currentQuantity);
-            AdjustZone(connection, transaction, target, currentQuantity);
+            AdjustZone(currentZoneId, -currentQuantity, warningRatio, nearCapacityRatio);
+            AdjustZone(target, currentQuantity, warningRatio, nearCapacityRatio);
         }
 
         var movedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
-        var newStatus = ComputeItemStatus(category, ZoneType(connection, transaction, effectiveZoneId), newQuantity);
+        var newStatus = ComputeItemStatus(item.Category, ZoneType(effectiveZoneId), newQuantity, lowStockThreshold);
 
-        using (var update = connection.CreateCommand())
+        item.Quantity = newQuantity;
+        item.ZoneId = effectiveZoneId;
+        item.Status = newStatus;
+        item.LastMovementAt = movedAt;
+
+        context.GoodsMovements.Add(new GoodsMovementEntity
         {
-            update.Transaction = transaction;
-            update.CommandText = "UPDATE warehouse_items SET quantity = $qty, zone_id = $zone, status = $status, last_movement_at = $movedAt WHERE id = $id";
-            update.Parameters.AddWithValue("$qty", newQuantity);
-            update.Parameters.AddWithValue("$zone", effectiveZoneId);
-            update.Parameters.AddWithValue("$status", newStatus);
-            update.Parameters.AddWithValue("$movedAt", movedAt);
-            update.Parameters.AddWithValue("$id", itemId);
-            update.ExecuteNonQuery();
-        }
+            Id = "gm-" + Guid.NewGuid().ToString("N"),
+            ItemId = itemId,
+            FromZoneId = fromZone,
+            ToZoneId = toZone,
+            Quantity = movementQuantity,
+            MovementType = type,
+            MovedBy = FirstUserId(),
+            MovedAt = movedAt,
+            Note = note ?? $"{type} {movementQuantity}"
+        });
 
-        using (var insert = connection.CreateCommand())
-        {
-            insert.Transaction = transaction;
-            insert.CommandText = """
-                INSERT INTO goods_movements (id, item_id, from_zone_id, to_zone_id, quantity, movement_type, moved_by, moved_at, note)
-                VALUES ($id, $itemId, $fromZone, $toZone, $qty, $type, $movedBy, $movedAt, $note)
-                """;
-            insert.Parameters.AddWithValue("$id", "gm-" + Guid.NewGuid().ToString("N"));
-            insert.Parameters.AddWithValue("$itemId", itemId);
-            insert.Parameters.AddWithValue("$fromZone", fromZone);
-            insert.Parameters.AddWithValue("$toZone", toZone);
-            insert.Parameters.AddWithValue("$qty", movementQuantity);
-            insert.Parameters.AddWithValue("$type", type);
-            insert.Parameters.AddWithValue("$movedBy", FirstUserId(connection, transaction));
-            insert.Parameters.AddWithValue("$movedAt", movedAt);
-            insert.Parameters.AddWithValue("$note", note ?? $"{type} {movementQuantity}");
-            insert.ExecuteNonQuery();
-        }
-
-        // Raise a warehouse notification when a movement pushes the item into a
-        // problem status it was not already in (avoids repeat alerts on every move).
+        // Raise a warehouse notification when a movement pushes the item into a problem
+        // status it was not already in (avoids repeat alerts on every move).
         if (newStatus != oldStatus && (newStatus == "Low Stock" || newStatus == "Wrong Zone"))
         {
-            RaiseStatusNotification(connection, transaction, itemId, itemCode, newStatus, movedAt);
+            RaiseStatusNotification(itemId, item.ItemCode, newStatus, movedAt);
         }
 
-        transaction.Commit();
-        return new MoveResult("ok", null, ReadItems(connection, itemId).FirstOrDefault());
+        return new MoveResult("ok", null, null);
     }
 
     // --- Recompute helpers -------------------------------------------------
 
-    // Item status: Low Stock below the threshold, otherwise Correct when the zone
-    // type suits the category, else Wrong Zone. Reproduces the seed statuses exactly.
-    private static string ComputeItemStatus(string category, string zoneType, int quantity)
+    private static string ComputeItemStatus(string category, string zoneType, int quantity, int lowStockThreshold)
     {
-        if (quantity <= LowStockThreshold)
+        if (quantity <= lowStockThreshold)
         {
             return "Low Stock";
         }
@@ -253,132 +245,72 @@ public sealed class WarehouseRepository(DbConnectionFactory connectionFactory)
         };
     }
 
-    // Applies a usage delta to a zone (clamped at 0) and recomputes its status.
-    private static void AdjustZone(SqliteConnection connection, SqliteTransaction transaction, string zoneId, int delta)
+    // Applies a usage delta to a tracked zone (clamped at 0) and recomputes its status.
+    private void AdjustZone(string zoneId, int delta, double warningRatio, double nearCapacityRatio)
     {
-        int usage, capacity;
-        using (var read = connection.CreateCommand())
+        var zone = context.WarehouseZones.FirstOrDefault(item => item.Id == zoneId);
+        if (zone is null)
         {
-            read.Transaction = transaction;
-            read.CommandText = "SELECT current_usage, capacity FROM warehouse_zones WHERE id = $id";
-            read.Parameters.AddWithValue("$id", zoneId);
-            using var reader = read.ExecuteReader();
-            if (!reader.Read())
-            {
-                return;
-            }
-
-            usage = reader.GetInt32(0);
-            capacity = reader.GetInt32(1);
+            return;
         }
 
-        var newUsage = Math.Max(0, usage + delta);
-        using var update = connection.CreateCommand();
-        update.Transaction = transaction;
-        update.CommandText = "UPDATE warehouse_zones SET current_usage = $usage, status = $status WHERE id = $id";
-        update.Parameters.AddWithValue("$usage", newUsage);
-        update.Parameters.AddWithValue("$status", ComputeZoneStatus(newUsage, capacity));
-        update.Parameters.AddWithValue("$id", zoneId);
-        update.ExecuteNonQuery();
+        zone.CurrentUsage = Math.Max(0, zone.CurrentUsage + delta);
+        zone.Status = ComputeZoneStatus(zone.CurrentUsage, zone.Capacity, warningRatio, nearCapacityRatio);
     }
 
-    private static string ComputeZoneStatus(int usage, int capacity)
+    private static string ComputeZoneStatus(int usage, int capacity, double warningRatio, double nearCapacityRatio)
     {
         var ratio = capacity <= 0 ? 0 : usage / (double)capacity;
-        if (ratio >= WarningRatio) return "Warning";
-        if (ratio >= NearCapacityRatio) return "Near Capacity";
+        if (ratio >= warningRatio) return "Warning";
+        if (ratio >= nearCapacityRatio) return "Near Capacity";
         return "Available";
     }
 
-    // --- Small query helpers ----------------------------------------------
+    private string ZoneType(string zoneId) =>
+        context.WarehouseZones.Where(zone => zone.Id == zoneId).Select(zone => zone.ZoneType).FirstOrDefault() ?? string.Empty;
 
-    private static bool ZoneExists(SqliteConnection connection, SqliteTransaction transaction, string zoneId)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = "SELECT 1 FROM warehouse_zones WHERE id = $id";
-        command.Parameters.AddWithValue("$id", zoneId);
-        return command.ExecuteScalar() is not null;
-    }
+    private string FirstUserId() =>
+        context.Users.OrderBy(user => user.Id).Select(user => user.Id).FirstOrDefault() ?? "user-001";
 
-    private static string ZoneType(SqliteConnection connection, SqliteTransaction transaction, string zoneId)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = "SELECT zone_type FROM warehouse_zones WHERE id = $id";
-        command.Parameters.AddWithValue("$id", zoneId);
-        return (string?)command.ExecuteScalar() ?? string.Empty;
-    }
+    private string WarehouseUserId() =>
+        context.Users.Where(user => user.Department == "Warehouse").OrderBy(user => user.Id).Select(user => user.Id).FirstOrDefault()
+            ?? FirstUserId();
 
-    private static string FirstUserId(SqliteConnection connection, SqliteTransaction transaction)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = "SELECT id FROM users ORDER BY id LIMIT 1";
-        return (string?)command.ExecuteScalar() ?? "user-001";
-    }
-
-    // Prefer a Warehouse-department user as the notification target, else any user.
-    private static string WarehouseUserId(SqliteConnection connection, SqliteTransaction transaction)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = "SELECT id FROM users WHERE department = 'Warehouse' ORDER BY id LIMIT 1";
-        return (string?)command.ExecuteScalar() ?? FirstUserId(connection, transaction);
-    }
-
-    private static void RaiseStatusNotification(SqliteConnection connection, SqliteTransaction transaction, string itemId, string itemCode, string status, string createdAt)
+    private void RaiseStatusNotification(string itemId, string itemCode, string status, string createdAt)
     {
         var (title, severity) = status == "Low Stock"
             ? ($"Low stock: {itemCode}", "Medium")
             : ($"Wrong placement: {itemCode}", "High");
 
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = """
-            INSERT INTO notifications (id, title, notification_type, severity, status, target_user_id, related_entity_type, related_entity_id, created_at)
-            VALUES ($id, $title, 'Warehouse', $severity, 'Unread', $userId, 'WarehouseItem', $itemId, $createdAt)
-            """;
-        command.Parameters.AddWithValue("$id", "noti-wh-" + Guid.NewGuid().ToString("N"));
-        command.Parameters.AddWithValue("$title", title);
-        command.Parameters.AddWithValue("$severity", severity);
-        command.Parameters.AddWithValue("$userId", WarehouseUserId(connection, transaction));
-        command.Parameters.AddWithValue("$itemId", itemId);
-        command.Parameters.AddWithValue("$createdAt", createdAt);
-        command.ExecuteNonQuery();
+        context.Notifications.Add(new NotificationEntity
+        {
+            Id = "noti-wh-" + Guid.NewGuid().ToString("N"),
+            Title = title,
+            NotificationType = "Warehouse",
+            Severity = severity,
+            Status = "Unread",
+            TargetUserId = WarehouseUserId(),
+            RelatedEntityType = "WarehouseItem",
+            RelatedEntityId = itemId,
+            CreatedAt = createdAt
+        });
     }
 
-    private static List<WarehouseItemDto> ReadItems(SqliteConnection connection, string? itemId = null)
-    {
-        const string baseSql = """
-            SELECT w.id, w.io_id, w.io_code, w.bu, w.item_code, w.item_name, w.batch_code, w.category,
-                   w.quantity, z.name AS zone, w.shelf, w.status, w.last_movement_at
-            FROM warehouse_items w
-            JOIN warehouse_zones z ON z.id = w.zone_id
-            """;
+    private static WarehouseItemDto ToDto(WarehouseItemEntity item, string zoneName) => new(
+        item.Id,
+        item.IoId,
+        item.IoCode,
+        item.Bu,
+        item.ItemCode,
+        item.ItemName,
+        item.BatchCode,
+        item.Category,
+        item.Quantity,
+        zoneName,
+        item.Shelf,
+        item.Status,
+        TimeValue(item.LastMovementAt));
 
-        using var command = connection.CreateCommand();
-        command.CommandText = itemId is null ? baseSql + " ORDER BY w.item_code" : baseSql + " WHERE w.id = $id";
-        if (itemId is not null)
-        {
-            command.Parameters.AddWithValue("$id", itemId);
-        }
-
-        using var reader = command.ExecuteReader();
-        var items = new List<WarehouseItemDto>();
-        while (reader.Read())
-        {
-            items.Add(new WarehouseItemDto(
-                reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
-                reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7),
-                reader.GetInt32(8), reader.GetString(9), reader.GetString(10), reader.GetString(11),
-                TimeValue(reader.GetString(12))));
-        }
-
-        return items;
-    }
-
-    // Matches SampleDataService.TimeValue so the frontend sees the same "HH:mm" time.
     private static string TimeValue(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

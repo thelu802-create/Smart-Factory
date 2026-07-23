@@ -17,9 +17,7 @@ public sealed class WorkforceController(WorkforceRepository workforce, SampleDat
     [HttpGet("recommendations")]
     public IActionResult GetRecommendations()
     {
-        // Read live from SQLite when available so generated recommendations are reflected;
-        // fall back to the startup snapshot when running on JSON demo data.
-        return Ok(workforce.IsAvailable() ? workforce.GetRecommendationMessages() : data.GetRecommendationMessages());
+        return Ok(workforce.GetRecommendations());
     }
 
     [HttpPost("recommendations/generate")]
@@ -27,9 +25,22 @@ public sealed class WorkforceController(WorkforceRepository workforce, SampleDat
     {
         if (!workforce.IsAvailable())
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Generating recommendations requires the SQLite database." });
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Generating recommendations requires the SmartFactory database." });
         }
 
         return Ok(workforce.GenerateRecommendations());
+    }
+
+    /// <summary>Applies the plan — assigns available employees to the under-staffed shifts.</summary>
+    [HttpPost("recommendations/apply")]
+    public IActionResult ApplyRecommendation()
+    {
+        if (!workforce.IsAvailable())
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { detail = "Applying the shift plan requires the SmartFactory database." });
+        }
+
+        var result = workforce.ApplyRecommendations();
+        return Ok(new { assigned = result.Assigned, recommendations = result.Recommendations });
     }
 }

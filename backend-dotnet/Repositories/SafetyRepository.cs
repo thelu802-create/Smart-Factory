@@ -1,95 +1,69 @@
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using SmartFactory.Api.Data;
 using SmartFactory.Api.Models;
+using SmartFactory.Api.Models.Database;
 
 namespace SmartFactory.Api.Repositories;
 
 /// <summary>
-/// Live SQLite access for the safety module. Reads alerts on every request and
-/// persists resolve/escalate actions (status + action_note) so responses are
-/// durable, mirroring the forms approval flow.
+/// EF Core access for the safety module. Reads alerts on every request and
+/// persists resolve/escalate actions (status + action_note).
 /// </summary>
-public sealed class SafetyRepository(DbConnectionFactory connectionFactory)
+public sealed class SafetyRepository(SmartFactoryDbContext context)
 {
-    public bool IsAvailable() => connectionFactory.IsAvailable();
+    public bool IsAvailable() => context.Database.CanConnect();
 
     public IReadOnlyList<SafetyAlertDto> GetAlerts()
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        return ReadAlerts(connection);
+        return (from alert in context.SafetyAlerts
+                join area in context.FactoryAreas on alert.AreaId equals area.Id
+                orderby alert.DetectedAt descending
+                select new { alert, Location = area.Name })
+            .AsEnumerable()
+            .Select(row => ToDto(row.alert, row.Location))
+            .ToList();
     }
 
     public SafetyAlertDto? GetAlert(string alertId)
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-        return ReadAlerts(connection, alertId).FirstOrDefault();
+        var row = (from alert in context.SafetyAlerts
+                   join area in context.FactoryAreas on alert.AreaId equals area.Id
+                   where alert.Id == alertId
+                   select new { alert, Location = area.Name })
+            .FirstOrDefault();
+        return row is null ? null : ToDto(row.alert, row.Location);
     }
 
     /// <summary>Marks an alert resolved. Returns the updated alert, or null when the id does not exist.</summary>
-    public SafetyAlertDto? Resolve(string alertId, string? note)
-    {
-        return Decide(alertId, "Resolved", note ?? "Resolved");
-    }
+    public SafetyAlertDto? Resolve(string alertId, string? note) => Decide(alertId, "Resolved", note ?? "Resolved");
 
     /// <summary>Escalates an alert. Returns the updated alert, or null when the id does not exist.</summary>
-    public SafetyAlertDto? Escalate(string alertId, string? note)
-    {
-        return Decide(alertId, "Escalated", note ?? "Escalated");
-    }
+    public SafetyAlertDto? Escalate(string alertId, string? note) => Decide(alertId, "Escalated", note ?? "Escalated");
 
     private SafetyAlertDto? Decide(string alertId, string status, string actionNote)
     {
-        using var connection = connectionFactory.CreateOpenConnection();
-
-        int updated;
-        using (var command = connection.CreateCommand())
+        var alert = context.SafetyAlerts.FirstOrDefault(item => item.Id == alertId);
+        if (alert is null)
         {
-            command.CommandText = "UPDATE safety_alerts SET status = $status, action_note = $note WHERE id = $id";
-            command.Parameters.AddWithValue("$status", status);
-            command.Parameters.AddWithValue("$note", actionNote);
-            command.Parameters.AddWithValue("$id", alertId);
-            updated = command.ExecuteNonQuery();
+            return null;
         }
 
-        return updated == 0 ? null : ReadAlerts(connection, alertId).FirstOrDefault();
+        alert.Status = status;
+        alert.ActionNote = actionNote;
+        context.SaveChanges();
+        return GetAlert(alertId);
     }
 
-    private static List<SafetyAlertDto> ReadAlerts(SqliteConnection connection, string? alertId = null)
-    {
-        const string baseSql = """
-            SELECT s.id, s.title, s.alert_type, s.severity, a.name AS location, s.status, s.detected_at, s.description
-            FROM safety_alerts s
-            JOIN factory_areas a ON a.id = s.area_id
-            """;
+    private static SafetyAlertDto ToDto(SafetyAlertEntity alert, string location) => new(
+        alert.Id,
+        alert.Title,
+        alert.AlertType,
+        alert.Severity,
+        location,
+        alert.Status,
+        TimeValue(alert.DetectedAt),
+        alert.Description);
 
-        using var command = connection.CreateCommand();
-        command.CommandText = alertId is null
-            ? baseSql + " ORDER BY s.detected_at DESC"
-            : baseSql + " WHERE s.id = $id";
-        if (alertId is not null)
-        {
-            command.Parameters.AddWithValue("$id", alertId);
-        }
-
-        using var reader = command.ExecuteReader();
-        var alerts = new List<SafetyAlertDto>();
-        while (reader.Read())
-        {
-            alerts.Add(new SafetyAlertDto(
-                reader.GetString(0),
-                reader.GetString(1),
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.GetString(4),
-                reader.GetString(5),
-                TimeValue(reader.GetString(6)),
-                reader.GetString(7)));
-        }
-
-        return alerts;
-    }
-
-    // Matches SampleDataService.TimeValue so the frontend sees the same "HH:mm" detected time.
     private static string TimeValue(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
