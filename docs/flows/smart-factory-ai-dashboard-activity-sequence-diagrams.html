@@ -1,1401 +1,681 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Factory AI Dashboard Activity and Sequence Diagrams</title>
-  <style>
-    :root {
-      --bg: #f4f0e8;
-      --surface: #fffaf2;
-      --surface-strong: #ffffff;
-      --text: #1f2a35;
-      --muted: #62707d;
-      --line: #cbd5d8;
-      --accent: #0f766e;
-      --accent-dark: #115e59;
-      --accent-soft: #dbf4ef;
-      --warning: #d97706;
-      --warning-soft: #fff3df;
-      --danger: #c24135;
-      --danger-soft: #ffe7e3;
-      --blue: #2563eb;
-      --blue-soft: #e6efff;
-      --shadow: 0 18px 42px rgba(31, 42, 53, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(217, 119, 6, 0.12), transparent 22%),
-        linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
-    }
-
-    .page {
-      width: min(1480px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 32px 0 56px;
-    }
-
-    .hero {
-      padding: 30px;
-      border-radius: 26px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: #f4fffd;
-      box-shadow: var(--shadow);
-      margin-bottom: 22px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      width: 260px;
-      height: 260px;
-      right: -70px;
-      top: -80px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .hero p,
-    .hero h1 {
-      position: relative;
-      z-index: 1;
-    }
-
-    .eyebrow {
-      margin: 0 0 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(244, 255, 253, 0.76);
-    }
-
-    h1 {
-      margin: 0 0 12px;
-      font-size: clamp(30px, 5vw, 46px);
-      line-height: 1.05;
-    }
-
-    .hero p:last-child {
-      margin: 0;
-      max-width: 980px;
-      line-height: 1.65;
-      color: rgba(244, 255, 253, 0.86);
-    }
-
-    .section {
-      margin-top: 22px;
-      padding: 24px;
-      border-radius: 24px;
-      background: rgba(255, 250, 242, 0.78);
-      border: 1px solid rgba(203, 213, 216, 0.86);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
-      margin-bottom: 22px;
-    }
-
-    .section-header h2 {
-      margin: 0 0 8px;
-      font-size: clamp(24px, 3vw, 32px);
-    }
-
-    .section-header p {
-      margin: 0;
-      max-width: 760px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .tag {
-      white-space: nowrap;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    .activity-board {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(160px, 1fr));
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .activity-node {
-      min-height: 118px;
-      padding: 16px;
-      border-radius: 18px;
-      background: var(--surface-strong);
-      border: 1px solid rgba(203, 213, 216, 0.9);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
-    }
-
-    .activity-node:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      right: -14px;
-      top: 50%;
-      width: 14px;
-      height: 2px;
-      background: var(--line);
-    }
-
-    .activity-node:not(:last-child)::before {
-      content: "";
-      position: absolute;
-      right: -15px;
-      top: calc(50% - 5px);
-      width: 0;
-      height: 0;
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid transparent;
-      border-left: 8px solid var(--line);
-    }
-
-    .activity-node strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-
-    .activity-node span {
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 14px;
-    }
-
-    .activity-node.start,
-    .activity-node.end {
-      background: linear-gradient(135deg, var(--accent-soft), #ffffff);
-      border-color: rgba(15, 118, 110, 0.25);
-    }
-
-    .activity-node.decision {
-      background: var(--warning-soft);
-      border-color: rgba(217, 119, 6, 0.25);
-    }
-
-    .activity-note-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .note-card {
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(203, 213, 216, 0.76);
-    }
-
-    .note-card strong {
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    .note-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .sequence-tabs {
-      display: grid;
-      gap: 24px;
-    }
-
-    .sequence-card {
-      padding: 20px;
-      border-radius: 22px;
-      background: var(--surface-strong);
-      border: 1px solid rgba(203, 213, 216, 0.9);
-      overflow-x: auto;
-    }
-
-    .sequence-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .sequence-title h3 {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    .sequence-title span {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .sequence {
-      min-width: 900px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      position: relative;
-      padding-bottom: 8px;
-    }
-
-    .lane {
-      position: relative;
-      min-height: 560px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(219, 244, 239, 0.52), rgba(255, 255, 255, 0.72));
-      border: 1px solid rgba(203, 213, 216, 0.72);
-      padding: 14px 10px;
-    }
-
-    .lane h4 {
-      margin: 0;
-      padding: 10px;
-      border-radius: 14px;
-      background: var(--accent-dark);
-      color: #f4fffd;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .lifeline {
-      position: absolute;
-      top: 62px;
-      bottom: 12px;
-      left: 50%;
-      width: 2px;
-      background: repeating-linear-gradient(180deg, var(--line), var(--line) 8px, transparent 8px, transparent 16px);
-      transform: translateX(-50%);
-    }
-
-    .message {
-      position: absolute;
-      left: calc(var(--from) * 20% + 10%);
-      right: calc((4 - var(--to)) * 20% + 10%);
-      top: var(--y);
-      height: 28px;
-      z-index: 4;
-    }
-
-    .message.reverse {
-      left: calc(var(--to) * 20% + 10%);
-      right: calc((4 - var(--from)) * 20% + 10%);
-    }
-
-    .message-line {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 13px;
-      border-top: 2px solid var(--blue);
-    }
-
-    .message-line::after {
-      content: "";
-      position: absolute;
-      right: -1px;
-      top: -6px;
-      width: 0;
-      height: 0;
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid transparent;
-      border-left: 9px solid var(--blue);
-    }
-
-    .message.reverse .message-line::after {
-      right: auto;
-      left: -1px;
-      border-left: 0;
-      border-right: 9px solid var(--blue);
-    }
-
-    .message-label {
-      position: absolute;
-      left: 50%;
-      top: -17px;
-      transform: translateX(-50%);
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: var(--blue-soft);
-      color: #1749b8;
-      border: 1px solid rgba(37, 99, 235, 0.18);
-      white-space: nowrap;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .activation {
-      position: absolute;
-      left: 50%;
-      top: var(--top);
-      height: var(--height);
-      width: 14px;
-      border-radius: 999px;
-      background: rgba(15, 118, 110, 0.2);
-      border: 1px solid rgba(15, 118, 110, 0.22);
-      transform: translateX(-50%);
-      z-index: 2;
-    }
-
-    .legend {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .legend span {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 11px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.72);
-      color: var(--muted);
-      border: 1px solid rgba(203, 213, 216, 0.72);
-      font-size: 13px;
-    }
-
-    .legend i {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .flow-grid,
-    .scenario-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .flow-card,
-    .scenario-card,
-    .detail-card {
-      padding: 20px;
-      border-radius: 22px;
-      background: var(--surface-strong);
-      border: 1px solid rgba(203, 213, 216, 0.9);
-      box-shadow: 0 10px 24px rgba(31, 42, 53, 0.05);
-    }
-
-    .flow-card h3,
-    .scenario-card h3,
-    .detail-card h3 {
-      margin: 0 0 10px;
-      font-size: 21px;
-    }
-
-    .flow-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-
-    .flow-meta span,
-    .scenario-pill {
-      display: inline-flex;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .mini-activity {
-      margin: 14px 0 16px;
-      padding: 14px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(219, 244, 239, 0.42), rgba(255, 255, 255, 0.84));
-      border: 1px solid rgba(203, 213, 216, 0.78);
-      overflow-x: auto;
-    }
-
-    .mini-activity-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .mini-activity-title strong {
-      font-size: 14px;
-    }
-
-    .mini-activity-title span {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .mini-flow {
-      min-width: 720px;
-      display: grid;
-      grid-template-columns: repeat(5, minmax(128px, 1fr));
-      gap: 18px;
-      align-items: center;
-    }
-
-    .mini-node {
-      position: relative;
-      min-height: 86px;
-      padding: 12px;
-      border-radius: 16px;
-      background: #ffffff;
-      border: 1px solid rgba(203, 213, 216, 0.92);
-      box-shadow: 0 8px 18px rgba(31, 42, 53, 0.05);
-    }
-
-    .mini-node:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      right: -18px;
-      top: 50%;
-      width: 18px;
-      border-top: 2px solid var(--accent);
-    }
-
-    .mini-node:not(:last-child)::before {
-      content: "";
-      position: absolute;
-      right: -19px;
-      top: calc(50% - 5px);
-      width: 0;
-      height: 0;
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid transparent;
-      border-left: 8px solid var(--accent);
-      z-index: 2;
-    }
-
-    .mini-node strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-
-    .mini-node span {
-      color: var(--muted);
-      display: block;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .mini-node.start,
-    .mini-node.end {
-      border-color: rgba(15, 118, 110, 0.3);
-      background: linear-gradient(135deg, var(--accent-soft), #ffffff);
-    }
-
-    .mini-node.decision {
-      border-color: rgba(217, 119, 6, 0.38);
-      background: var(--warning-soft);
-    }
-
-    .mini-node.action {
-      border-color: rgba(37, 99, 235, 0.26);
-      background: var(--blue-soft);
-    }
-
-    .mini-branch {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 9px;
-    }
-
-    .mini-branch b {
-      padding: 4px 7px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.82);
-      border: 1px solid rgba(203, 213, 216, 0.72);
-      color: #8a4a04;
-      font-size: 11px;
-      line-height: 1;
-    }
-
-    .flow-steps {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: flow-step;
-    }
-
-    .flow-steps li {
-      counter-increment: flow-step;
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
-      padding: 12px;
-      border-radius: 16px;
-      background: rgba(244, 240, 232, 0.62);
-      border: 1px solid rgba(203, 213, 216, 0.62);
-    }
-
-    .flow-steps li::before {
-      content: counter(flow-step);
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 12px;
-    }
-
-    .flow-steps strong,
-    .scenario-card strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .flow-steps span,
-    .scenario-card p,
-    .detail-card p {
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .branch-box {
-      margin-top: 14px;
-      padding: 14px;
-      border-radius: 16px;
-      background: var(--warning-soft);
-      border: 1px solid rgba(217, 119, 6, 0.2);
-    }
-
-    .branch-box strong {
-      display: block;
-      margin-bottom: 6px;
-      color: #8a4a04;
-    }
-
-    .branch-box p {
-      margin: 0;
-      color: #735027;
-      line-height: 1.5;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .detail-list,
-    .scenario-list {
-      margin: 12px 0 0;
-      padding-left: 18px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .scenario-card {
-      display: grid;
-      gap: 12px;
-    }
-
-    .scenario-block {
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(203, 213, 216, 0.68);
-    }
-
-    .scenario-block p {
-      margin: 0;
-    }
-
-    .scenario-block.warning {
-      background: var(--warning-soft);
-    }
-
-    .scenario-block.danger {
-      background: var(--danger-soft);
-    }
-
-    .matrix {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: 18px;
-      background: var(--surface-strong);
-      border: 1px solid rgba(203, 213, 216, 0.86);
-    }
-
-    .matrix th,
-    .matrix td {
-      padding: 13px 14px;
-      border-bottom: 1px solid rgba(203, 213, 216, 0.72);
-      text-align: left;
-      vertical-align: top;
-      line-height: 1.5;
-    }
-
-    .matrix th {
-      background: var(--accent-dark);
-      color: #f4fffd;
-      font-size: 13px;
-    }
-
-    .matrix td {
-      color: var(--muted);
-    }
-
-    .matrix tr:last-child td {
-      border-bottom: 0;
-    }
-
-    @media (max-width: 1200px) {
-      .activity-board {
-        grid-template-columns: repeat(3, minmax(180px, 1fr));
-      }
-
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .activity-node::before,
-      .activity-node::after {
-        display: none;
-      }
-    }
-
-    @media (max-width: 820px) {
-      .page {
-        width: min(100% - 20px, 760px);
-        padding-top: 20px;
-      }
-
-      .hero,
-      .section {
-        border-radius: 18px;
-        padding: 20px;
-      }
-
-      .section-header,
-      .sequence-title {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .activity-board,
-      .activity-note-grid,
-      .flow-grid,
-      .scenario-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .mini-activity-title {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Factory AI Dashboard — Activity & Sequence Diagrams</title>
+<!-- Fonts embedded as base64 woff2 — fully offline, no network needed -->
+<style>
+@font-face{font-family:"Geist";font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,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) format("woff2")}
+@font-face{font-family:"Geist Mono";font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,d09GMgABAAAAAHTIABQAAAAA5ewAAHRRAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGoItG5AUHIomP0hWQVKFSD9NVkFSPAZgP1NUQVSBOACFEC9+EQgKgZ9M/BALhRwAMIHOZgE2AiQDiiQEIAWJBgeVfgwHGzfQBxi7yrb1ZpWCkAa/dhSB8wAK0vS/CjMDuR2QorT3TrP//zOSjjEEtLGpll27wRKOzECNRk8R7JTSMFpOJUCfBmDCuiR1mO5nTDzAghNfGnzCzXz4I1uPZzyL9hxdbrQzVLIu+AXL8Nu3b6bLyc4nR/YQKDmR6s1I7A6o+vfwy6PO31YE1PoQgUl4KMNn72GnFbYCtLzsa6h0YFtF09NluAqMXR4jomJdX55/sKv+3Fc93Ss43C8j3Q2/HInKoQxkT/08bfP9u+NALMQzhgxPekd6NkbnNlZRyCIKFxHWslhEuUiHaM7+B0igxQsUk4TECREiymbjm2SzJBslBAtaAhTt0evRUqcmd167iv2Wiv7WofbK63n9tWdWc4Dva9XKl/mrj+rumQnPJTzhQSE0geO2CK1gV88xlJvFTIwE1+tWRFaUdk3kpfq+89/5y31NWTOWUnEqmyYBYvNXzup7L1kvUylZlmUXtoume7ij4wPB0uWAp437xkjyLp/3tIcjIPcAcDUWqWxZUl7lVt3IUtWdOXUdCckKECCnsvIh3/A9VUEmdSbJoFjWy46MSSTHITA9AE29X8nOQx9p7thx6Tp24vlPZymKGzPdjNdT65bWkpxyOOXdczkt/n4zST/cc2qTTZ/s8zaPh7ExBgFCgIRa//pSR4DAEACHOt+/k2TJtmzLGDd5QHkppwguDEvH8c5+8D8PG26ELecjwER/6ar3CYa0fIQfiG2niFnkUc/ZnDnInblyAL7jpRteiVtNMP+51fc3QEgIMblRIg4V8EdXO9NTo7Jbzhn6MmL/L3b/7P/a/YlIiVLVTjnkfyPA4LpSuFSuwnpj88A5gXlZ8SCZLgKO2bYs05eRSfloQ5/w96qWLZ4+sQR1iVxd4F4ljcwZrUOefiUnjasdl66uaN0B73/gA/j8BAmRuwwKNKVZk+IFrXRJYXwEsLsG6RRDJelS0p5DTFUIsXVRuqjdN27du+v9f6aa7XzypFvKaXlO4zzO47yOdQ5F59pFs1iCDwuApJag+LSA0nAp2gMceW8ASc8DXCLACwyXIh1y+hAvDOU0xCVcpmMo2hBSlavGXe3KRWl3IRZla79fy6pfxWK2bmOFEIM0IqLvPqex5tsrs0rsXg/8cgnjCiPEsgixVYURyib3X3v7n7nGX7csFqmITDkceQ3yM7b8K7b9yoUrPAzwPaSVI9xBSGx6l1RmbBlfcaDG/8OmAqV2p93L6zJ73FFpgojkhyAhhCDT7Li8wAkt2t7WbxSOD9GgppPsM6nqM121pHvrK4a+Z6EoslCCjoMnJKFIRySaZsuASWKMryGoVkXILpwMl4lMVAPcQXA5nPUZn4AFCoi2r47mS7vzZObRhWe9c0aN2Dvvr7ZaoQedNM74Luyifrwv55QLhyjc5CA8h7VBCAWzXHAvSNcf4hne94TiSiqtErVBKG0Mj7rd69Pz1Rdn5gx34AOBPv3/XQGQIPku4AAE/PsXWZI8PgXBXtYJgC1BQIBhlBKEb/u0QkL8qa97tkE8AtC2BgJrfhNST+vhDoJ4oOZwkPhCEwMYTFYhGkkA4cOgzgNFQZ2BioVTk+DBw9R3gtk9Q+h4hA1NMMxellqh4OJ5/gJ9948mKpuCsj3zaE71SmoI0exq2+5AvIGdIbV7Cx7UMee8UPObk6HNodiUTnKJr03PcOCp2j1lanA3LaaG2Ukba6WoETSA/YyiH0lvTB6CjsxlnwjOVtj0Dm9Qw7kLTsVKgeaZBqqD3VkNbF/kJAeXsgQF6E8Y7qbH5B33OM8pdrGGOUylZqUwGobAQJO2wUwBCZhiZANSGal5xomvHYMv+F/CE1g9a2p7wU3P07oSziRnHbeLqkUdIX4T0SaKKyrKXhMZjpHhHjgm7PSNt2CY4ELA1Yf3UP+BkHznQ4vgV9SWXZAVbgRq0ZiwU+GzIsnBCYJVvatR7g5gyJkmGUIE7kzFfp6sVASTiSozw01OVE40TlpXXWKPo3zYRtIgj8ghlXUf4QhluWQt4QlGAGLCl9rUCE3XULdlzOC1CwmtqqWgAGk7JFyXsBI222iUcXHZJQcpozrl/4pF7yFrBKiakeB6EpWDtKoGdasghOcREv3qK7GIsm7lUWLwNEScPG1R4tCNampj1ev5EhmbkCxVU/qKKTx9rqnEBI1rG4tgkB+AFuE2MNx7bQKERfQkSJrI4NoQkeIcrLCzXL/BssK0w0xJI55CF4KJeBEMGCIjBeMioANaZjPAC73f57aTrRMem6o9z29wbTuDGb1XgOdOcGAyIy/KJhApzdKSzlBoXDdCXz1ozN4DA4V1MNLgFTKxgiZaGE1vqqILouHMB0ZOJgkKywR8yHXLqSjrd+JMfOZ04MAJIU+EOkgbT5EiZLIr8Vf1IwyAs3ItHgYXETxpIO6eKSQuySAwijxy6JUkC5TOyTAiSnqBQ6BgngMO4p009jumRuglY4mrJyaiS2oGMaUIJKMImQwH7sGFB/HpzqLhMzCEQbSkhjSQgZlBwupdqAh/UoP55ob6+vmA6tsxR+RWLwv7gGmbPBkyu8Q66d0zFtTV+8buMvvmLafPGRJDC46zBQkI67mF1yK/L4l7zPvWHYAfu237VkD/+5VbAe2pG/00qE7t420Bye0a/umDtu4CnaZM4EQwcNTzcS4eB0HidMCIDg//1LRnXeZkeHqmhB5b0GAgQuAN7WdRLrXGizzSXV3hPP6GzXd0x6gGmxRCxB0WFsmnq0QTobjEGTAXI4BFE1fOMHHJUHEb00cI/3xreGh0xC42aywxx3TjDdehWQ0fO4SWSiiW1s9shBxCKf9GJHFQnDTnZ8LtjPrF8Hw2jD9GVtf6hQtd9NvoAY7DNAVBek6wDBNQJL7/MHyer3ImjrRa7y8Q6rO0ggPBNvpGWtVWCRKLIa1/2JeUllnG15Ka74bUL/rhjZryjcpvmStCIC05MU8CH2o8w1vxua79jE+GFx9l52m8z7/TvYTLVNqUkzfk9RWfw9zwTIF8VSF5qUO+UC80zx/d3S1VzGbQKuJH6uxAQ8tWk9iWGXbN6e1UJesanNhasV1lfQsiZuaGY4JZO0fhzj03Y5yQDsN6wcEDNGL7GjwHIuLgSTmkiykT+3d6B/EU+wJnjzjHn+5eTzm2C27VSfUanXPeRdcjOeora6MPCz06rRXVfhfpeU8KfwUihLD1OmAzBpnCCuIgniwUs63XCeJLMzbI9r/7Q8/blASSRg5YdZR54LEaRqyXtVUmkoUlhFwRJkRJ/bpCPgHZ2U3y5sJLzIjQKwY2/gJlgdxGJEFexwnQsLol8wXPsiQGUlUY/iLPAOR2gXr0i7U855RkGtwcB2lD/+vnc+TEmQtXAm6E3FE8ePLirQ0RH2JtSfii+ZGSkVNQUlFrh6GhpaNnYOQ/UPEFJUKRWCKVyRVKVSkkyYqq6YZp2Y7r+UEYxUma5UVZ1U3b9cM4zcu62e72h+PpfLne7o/n6/35/v4AIkwo4wAIwQiK4QRJ0QzL8YIoyYqq6YZp2Y7r+UEYxUma5UVZ1U3b9cM4zcu67cd53Z/v7/9450n56e5eZb96UKvjjWaLaJOdbo+i+wzL8YIoyYqq6YZpQRs5rue3uCOUcSGVNtbpFCYUjYGRiZnOwsrGjj0HTc9Tw7Rsxy0US4x7Zb9SrdUbzdYIOz1/a0EYxcn4xGRHXjwzO9eXH9XSshrWaHV6g9GEmEM+g0fAODGiR3Fm13lDaP056vhVa+OJ/p4o49FbmCTR+wVQhtxEdxgQVYJVHFAXzUsCdpkm5HDxE9WtgINl9AxwgrNO9kXZf+/5K+A0ep4Qf3+5AzpbMv0O4Ko3bgLUuGoUmDO0qEqAjTjAE7AN3xv2oPDzP1KocKiuW9MKlQJXpcU0c75cUcYzA9sFEzVnJkcLzWjBYj1az8cXpqcFF8yskvjs9AVzG3pufjPRJHNYlACw7GJCHH2GqJHfb5uiEcQMwoy2S2sY8k++j7jRdt8LwgncAZfNoWgRLaGltJIOoE10Ar2lLPWbXZ7rC1tbZQ4jk1W2CZN5Y4A3OG/cnfamxY+YpcPYsY9qEwo+qkHr4LjB3pfQRayGaWBQnDiCAR/fJS4X34SbK04Maf358FZhteABSAR3D3TPz28SruTLTC5x6YuwROPW7lbviXORho2Hp+O329konXDRcecH1o+2y3UshoLscsGZq0V6YmPUXUxjg9z+dLf7TRfcitGVJEoxGc4z2Z3nsTfdyUYzMxy3MLfv0fJz5Eb0NmsIHXn8oohvvJKAtxHuxpA2ScMnOnP6IiYJ/3hqTrrWG+l/lltmhSYkDIGHg8uBE3ezlz4m33UhpTJ2u51PRS2DrHytiVYvkIVn4pReoqFnNW7ptmtdGpWC9mzX+1TayU47vvZpmryHqUuCEmVl4rapiTvd19hiD2pQ6kP18dEgi31vh5UhhL0z4e4iNCZ/CKE9MSaalIH671blDxkONCw2Pmhb/pDBQPNieX0WXLZa9m6G3S7GruWx0U2HXN02oa0YksvZMPa3S4tFirGzwR6pA6GhhexD5JrQeaD5nDuIGYrmwJUDTJnByZRGFyVlTk+XTzgHtUlfy+QJ4gT2bObVB+S4SBPzmBbWJcPvK2FPPiRTpVIncLb0WOtTQDnm9IXYxJ4PmeWFnWyKGNx8Mb2snVmUKQ4cLneM5dFCOXyROTEPWIr72oFwtcEzpeAR76UDJECADiFTIFIaBGlgPCARRNpIhRQ0vvqaBSNZlwmCuQYyHUWyMLMwUDRkSwiUVUsdQwg0bIJMTCQTW8TETtBBwJBUpOVqCiqdLiEK8ANltOZjzBDysau6KgDVFTmvpYzyRUq16bQuimDOHs+n2gSTqoQAX5UDBogO6J51vV6XZakkCEdtMIAMsnn3xIsUXdAwFJkHykT6Tq05qKHI1BNj5m4ZQ4lpq7aUDRbZ6j5i78fS5GDT+TlMZscIKVGCYdB5kjqblZQ50cVuQcB9GSHfdTQLomxa48KigrJNGCEXUGBP9+I+ohKiJiMSFjdwHdXXGiPU0BVAwNeaFadyewaOc/EPBSgRRpwXSf8ZjRgEsiibDkOlFKtdRSUfRQo7i1AwxlbRKKGu2Zw708slARZcqUtoSrMjNh4ZJZRcS7U/IUdIDzzDbYfILDEjyjGKzjxWZLxvIBRAMYb+M9qwFzHqJhbAoM8bOjHhrM8dUmI18OptN8511HDv1K7VNnaIp4VNnWPiTby2dkg4DF+FbXjCfRQ5Gmf99c56niLRW8/ozMO2913GOZZ2OKknHqAJN0VxQidTVMo816nFt5GZ7OIsab7HYLPoq6hTnCI67Hkywa8WccLWQHOmuupR2gzXa0fW3tNGIT2/btfhpMt2khxbRPdXjzButlDAhimv4G82JggUmh5a7NUBKGGGA73L5S73evEJo7NroPzwHZBM69MGIOz3QHurEmmF31H2rYRUt3EKHjSwYWl+z3QY/vXqLCnOkW7HqeYMx08Bq9b7ynM0AbJW+6szzd4z9Zddu7iVrztC5KbF05qGcd5YO3AuY3xKsLkFheGJn6hMQ9FQnHEEpyLH61VmmFcjUA4KYM32MiflW4iIN4AG+iPREsWScztizoNA75/tdJqPPBuhqEAMglJ0pl0ZYSBS2ChSzBWrFSsAsetyHTJJWoIXD4jrTYRYCgVwQ3U6v3QF/af8lM1Tje78oCxP47Sf0LBBOcNVEG1XRuFdXUrsV9ZFxLKoq0R59zsIMvBTR4xBj6iEuTlD+lW37mELsraVov/IgEa7YzsYtjvwr3XkGZpbYtWpapZ7eN8BMYsv7GfO/pvB5NsiU3g30+17ymPkG4UCCuOvE5fuW/FljrYYqSG7fYRkxUmvjJjC2UqKgHufMDPkUUAAdmKEHUsXDC9R+58+1smxl5+mDFoSbbw07T6eWIonxMNHfxkq2aobKqP5xQp5ZKMu+vz6wy3seETMK2qnXRidPfb1lAVd5NmSQvZOuRlfZdWq6Iu4XMvX28ixiR3et858b9zHYPNt+ymkHlSUP1R0kdRcpb33Win/3ts11oO1LPHrKoEW+uzVLwUZEbUHA3B9I8gVYNmdjuvvg/hyNsM9dcrVS3KQ90ZHB4oXgTulUcLA5zJdv8356Szp7t9xt5Gbuc6UCF3qpH3OqhnoeFLFHPa54hd9tq16LT46rnR5/yMnMoG/NoxuVJ0vgtNkM0vHNyyzGjBiAOXaAePMWB9lVNiOI27QfT99+eXp8ZZyWUI9Fp1nvyUzZcqFGVjwQ9dr8dEzoxkrmlcMJj8HTl0WnVZsHQ346O8tHwnLhBVAoBmPTAv9jE6H6kskDx+xMFyGbcueC45NWkusz/ErtbCuc+dGlxPYbW+eTSjgDVmCb00++dIiMKH7ZwMeuhoNxgw9LZ5NcYoMndhxzzhtFO+hmfDmFkj5ec5lzQ2+tB7V9j3nJ3h5n7O5clvY416o/U1kUBSnt28/5+L55s2rYdctcgHu/KDwcuuW6OUbN56QtDNeejsL8GPv/mxGk6oA6KsvgI8LUJNmvUpwTTMysI55KCAVzzSYbvXcbw8TO5YgNuuPXoO2OlqNLdw4tKYMPerSOyXWZU8p9ZCx4fPJuIvTg7YNt5Y/p6fdgYWkSVav/ky5MjsB7MzrF7f/pz+fV3PJE3QCVi63vtQAhF74vde0v99Kn7vH6l/cVYJ316uVWSkZSK3QAvWjjZCpCM51qhZuTFMzGxTwp9YaFGS6NJkzXIrms4qqYbGgubyEUZHj3wiLP3oaQvsllFOYBbk0hquGFctdsU1bfzX+kyNzI20lssS8Khf9ms1YZ9HQf/PFFs9oViCt/RaPNBqWZt/xHQZZtNj2ta57nKbVGOcYgOFyY/9i/JRQlIyXF8Mn8jRKKUqwhbthFzZBYz3XtTqHfwJvweo42Bq24KV2JLiGTqcyOODAwRfMMcLoxO5xZvzzWEnNKm9YnncbjeYS09LWNth2aL4xZKjDHb8dtuFW2BFNunFuzNWsJB1OKWYAIX/Kx236QNfQYiPt1Qz5WgNASr750TjGeMl2AabfTSr954xoUWT0xetKt8LWysdd0fYed+BORQ1MzevaSHFu8xL/CNKkslO/id103Wys9bbhdtiCW+XrweTitPRrv9Yhx8qpPXivqFmTYXvgDr3QgwymIZX5KKkevmwuvdPwt0T3TVxnTm7N4U39xYBtA/s6sp/oQR/XDdacy5Lf6WCAxwke6wPUNnBVeXE8BjmdarDRjW6Opw5bWrjR/DtQX0Lp76W3gmcxvXV1r4JcWItZL1ToKv3Px//5qq69WZ5px61CtUzph2M/Aizwy7wtu1b/+fSq1wnRrx+e9KLSybeYBUues01RGXX+DdjLbcFcImOfFNBg4052pjdlJoj3fyvvRbWC03bjIE6haxxJPylfeCG07g+FZS8+gYTSkL3SpUMct+dZYVmYWVv4Fb/puji9X8F6wmH38lr1eszqa5t7xUpVqut2gzoDIxTNulK6NIbrHyXW/HN6+1J/rH5TRItR3MCXKZYPwknn14FVr/Kuxqc/C7z4U8Ka9xUgqcr0GpvylLGuOqAxUP7pRl18UvV/3Jw71lOeUlWkqzc1isf2vdcHplo3o6Nz3IoGKNIEyFnLaZDvcJJctq0oRxxkSEaHdbCPBaHSDccO0jUs0wmu8XscWzGCPeGmyn08HicsvfEb5vk7/JTrzNq0Xq+cCCnkPEBfUZhyMWXZcVHIlD4R8qrQz4u/exhUOhHyKW0i2qK4Y7e0ezJQAZZkC05GC9mPGvBVIxXl+7+v8ddmnfW5NV5IMKBcxEDIaWSqBMSDNKuwut3lUetRjoy82gsvo65NLgWSHwZe7I0MuLqH1gjv3eUkOWyreH2GlfpLqm7g5tvxddumA3hV7M28IU0/4O58Fv1cNs6x3ZDNY+6a1HBDLhjca5s1qwbDUn04pA2bw9CPT565eO3NZyCbdBj4XPiUvpi5Bme+fm3iGHXLllTMjt60xY5S1myOSXXr1yrD4kCP6J179pFPSl+mhOXjgXryzoyvNJprrisGRkmYmhhFXl+z66JzSkyj6rJB0bbBFeNsiHbH8NYcWn6ogse2s0HmD8NdzT/F/oO9RiZeynHE40sDRD9uwPBdv6y3r//tAB7dnXSui3Mpw/E5DnwjF7t7Gnxshs5M40eqPAyOucTf3zR10LHYapSLpOZSZDHeg2ikQpFFkR5QlODs9io2d3SSdbfPGZjdNzlUTky02K0SqQWmzfSX0/rjh02qcjrjcR8hqWvuHOAb2eZfYEe+6OhAPl9Q5i9zWBs75s2f37Gg0Vr/kt6L+35B7ehvNTgIjhyxD07LwOwYHzASzF12zZd9narN3T6HOijV1MfDXmKiGnWUiq0wfaa/nNGPwlKBsYQRyN5hf92ARWzt/Zprs7CBYsTlHVo85HUBKg5fATB8KHcIP7Iwg6QEfYNc1hqGOKLCnSYHMppx53XX9Z4Z88H8+12CtuY/hs/oIyUvGk5QNoPgF/ti5xIcELPnUib0rImBRQb6FA5co54JfxqBfqQvesGPi10P9KclgJWAdzkVm3umqR/z+PumaT0Gh0NsgWj9FRW0mRa1mEI1Ugj7S2vwTUJ144kDBxpPVRfrhcW1afPt9rR5xTVQOA4WF5q8PwyowlWzmDw1O4GKA/CgzzUjY/i2Xz6zf/bb3pLTriMhgbxKq2U/doUMpDROw21aSG3T4NNAx2r8TBmm0agxqOzMpYy18eWBXaaaNgF2Y/WIawRM75mFuaYztrk+zm8M4ynLmNqkn/9V0o9cb5/VXssvshhYdrk+Qi8naiZdcSWezl8Ac1bndgwgVlipsqqRASBKMHcqdS1Eg5cY5JgQCp+vSc8nk+7hTHuqKcXHpxuFComviW8yNcgUdVGQl+ijwGoKF7aqBAWXTflwkiutXs4uk0uUrlAxCOt/A5+A3+gArIT2/iV9o65RD1puNqPlnm/YV2jg6XcN/hNL0qfQ/8FAi3XYp14VbdX4EUYj9C3FgKk4nXXAPxc8VRVcmW08Naeqz9UG1+Z7QLj0xqaaDea2NT9sIgG+a1FWH37z9y/hahz8EsO3kYsglhZDXIlDZK1CLRVfO+GJjEfa/b6qpo6620nvEkkItjyW9Et7ZGK13pZLMYkMhWSYzdmQ5/2ogEIHG2Ps7mVz57mX2ksMUmqXl/YqooztoeRMWIdHJrn1JrxwXYFGWGp2qSc4Y7B8HZl0wOMgxjoQB4SYWtsoByfoDLYiUzEFsyRqo+dlFtBTh19vgDaatoCiXQFLDFOXlXJulNBrGcGpcxY80OUx9XUa0XSnk/z4qUFsGktTud/SqObpOIVulaLQoy0G0hgkpJG/j+Py6SEtIi9nyst2uIkH9BKByd7o9yMyCSrh8eJt7lC6KopBtKNndnqWNu/BgjlUfMRC6B3dX6jLKrRx/aeo0KNQFbp1HJ7a0ugvtzSBd3H9vCn9VR0zFV/OcFRGJZsCE2dbsOnk9ZWPok0tSnmnDZN3RGuT2MMpRQqcNFze26Iy2kyYP2DFvCaKy51O/WcU8GLMLRrZ+zgum96sNemaIPl0b8YAAcecuhKYe8EbmaLv8v2rpRItVoNciSLg2xKDETHvQHbkRRaU3L+AnEUAfYO0nKLU7XYTD1xWGi1SmYvh4JVoGtWyTrNF2lGvhiUeQRaO/asSexo4SJy2LADKIgtRLZOjtwTsdjQAgiM4Y8WnL3SZDCnKp/vkTlxpFZkkkMWKKACGfLd1wVMk7+Jh5DAOQmuQbbRq7l8LJiNQkslgwYBvBP8qLLv92r2b3PrdLxpCgyAxJzNfkD8DmWVCEFMKPQe5hwB6kjW8e8WgTMsp5muI6uglKgMXkrrrq3DccD1/8mtGkR3HtVcK9qMA77zC8z76wmLKYSgxIcMnceJKRGpRMNQkKsxTAlaMqaV0idOPWVPy4Tf93Ocge+NGv1+HTZOfILAzxu5Z+8FMz2q70Kgo7HZRK2cZsnjW9G/ZWAQmmDbdhdFmmPR8W4YqyaMU6VZlpJf6SKlEV6Wnnm7AEbqJTKKZgG3NNjSs96DSX6q0Ba3F+0MT/GiyMfRZYbNOTFhzQ4c2VFSgrY4DswrdajXZrWH1n5/fRV7/33GNh2WtfvHZbGVp0v95MBSx7IYYFuf4+EJGYIlYpJHm+kp49OVpJCBqPj7hxKwwfRYjGLPKX1p0MKwX/eNqMcwiu9XqwZdhTph/UwAfsn/+fxfsR65FLemO0mpgacjSQkOPsXN7ryFAGKOrLZZgPDexXS8ulUMFhWkVBz62xLnoShanyOBlqGEPR2CZ4SaWRxsLZTNIWetWviiL9dLl7GIRHCAD7LlGWF1Voq4J1dm1TpeeAHb5eHyHKDB7yjQIg2y4EmI2W3JlbBtbpSsVFh9TKQxG9XPQZzUbkLf4W0oSeSny3QXkewREOtoqmgNOXGUVGaUqA2ZQ4EnY7JEEyKsHL867+T8//gz9HIMZjUlqj1rb7JP/VvwNk5p11qsNEJ1NOBJWM3hh/oXg4YjTzjUrvyMjmL8GUWavrynIOR/lX390bWf77/E/DwuBHbd16pGN4VPvQcCz3pIxVlGHtHUyKSwn+5XBGTEHlZQaTXrNjLjBiTGK/LCYlJyCvJrW2zJaJiXNPmlN76QkB2D1ouUBDNOuUKu/0ob5AxaIcalEcJnBPM4XHAO9dWnvbBHkrZ1qbffKN3d0Ku0+K9rmi1FnB7A2r9XB1+uoM91e8lHk8wzJ8bp9/I8CZMcfQ6qov9jo+hERfg8HfDNnWk+oSTzx+FAh5fkDg9lljTZ4iTEN86d3mhoEIr9SREZxjYn6yKVjQ5mDOKAkdE5vJbg9RCKEiyGWOf13bvFnxmyOBJdQvoPoYp0E1miFrV7iRFtvTYOujiNyymE7hsUnuSbWNaBadWUnD8z5xI867/ivu3DXJ95/CFWAkaCr5ym8iJc4HVUodXbczCcbYWox00In+jlL+3BWHnHcTf2cp61XSUIGg7K1RQmKErB2o2xJnSf7Y6irGbaVuhki81feqKMb5HIHzJkbFkze1IIVCvQNcmmLCVW1tyoMDr3TY0Mwp4ZrprIMPB7VbGCC062Km1Ovor4B/B4Km6vWKD/K2egDrAT91GJ1hc5aHjRPSj6NWGCJ2F3FLy2t5ovcEthkuZZsmeQLWnVtc3ux3qH3QhqVDcFsGKLS8Co6v1QrkQpguVymkQuoBBjfRfXRL65/KoZkchwu6m9T6J/SjZkw1xVhD6rRco8yN6hVSBTr9nzn/CWX9oay4od8mXWErAbDDdqnlMJeenqBOp3waefD7ap0DQ+O+1OI32QMHwMsmd45JRDAmw0GTUVsil7OLjLotRwji/4/0hkgnhX8uPzv+2BC3Fgl4Kez/0PnzQGbYebVVYcVTPtHyZny9EK+5rFHr4VkGiWfKzo093/bUk7KAEuGnuA8TiuiU6qyc+ysDGlGdkZG2p38vNjkJ+Vquaz0dTGJ8ipLUCDGVEAI+w4IDj9TPRDJRL49q1qXAZpMqi+BHrupueS5lPwYcnbhkDLt3k3Z+tjaE0vSVXKzpNSiA0wZZEv2JtfPT2bDD3mdp/F4UYSd4IFamTmV32w7KiOwq8VNuT26pFsjMiH5Q+X254XFkFCpelZc+Hx76Ray0FTVpdTFOTnzqJS1Qfus8GjOn1mpv8/G31Oz/gSMZHQfegQdQkE01Y+glesBOow61QK0bEhBF+UDVHGHQIyIaI4g2F3AJnwve2beQes6m0RHAPLhi5AwZGwU3A89uDGRSIi2iVxgxCIIBA0U5mG24DSeLg+iJ24TUq5pcznB9L9Qc5IraeU8Ul79Sn5PcuZdoSM3Fn6jZZDmrVy1Te7hr6zPAx94hRiLbeWX8d5osjAH9lLecjEB27JiFN5EjxovCrwarQ8Ja4L9j7XwjxnBUXQe8GN+IE8cXbdx3QOtDv8cPYIeHpVlwJGrn/FPT1IcpyjXFqAlqAbypKT3YDX3oRVtPA1kZB0Dm24DdTvRmagA7KvnolD178kRfoy7A//2vd8HHmwQbhD1TWuX7wSJ10hRlYRa+q+uX+nvSmQlyXvN9GUS7WJSpIpFVeY9ef8jC95dTGHjpQ1d13NLNBolYjFHGbxEolpV1yw1qWsEonIFc3ftzvXfniI3XvQiyt5wX7FI5JCy99TtXHisxOWS676Vz9MIb2o1RxYiz1jVWZdzss/k5J7OVlPsaUnOmVjQkHW4ev5nyGe29nDdivoVh2s+kBrfScCYPWycmOp8jO702JLzx+uUHd4JpoTSWvorhE0NoPeNrdEGat+iy1GQHAi3YLNmKVIbsmrxpfnLTSb1YyppiN6xrGCp0ciaYyliAE9CuPfnQSFc1liA27UBK3rdSKWlkSXoEdlFPQJWo2W5JrcHdXOsHL9Z7DJFRZoixW6z3x7mRsFwr/z+JW5jZKQxSuJawuPF/sGVEOSH9A+vfQKLQo9Qv/TLkVulNrL4uQuEbi5Fmnn7hadoWLARsfOKJ9vBJvMibChOCfabG4CnKiIYaE17ftfreWtANBBVE/e6Odj8mrONNTYMZY1gI+ADb01GwDG+Twv7m8IQIzVewUUjcjerPmIRYNy32izIAb2UN7wyPtsKbA3A/BgYxK+lxN4xnPuI0yw8wwHDKJXzR7ARg53bAE7VgW+moFSUMnordEU3lKXcliaBoWB7hT9X4xlVQ2jVB5R70MBpoDDaQu0IgFyNSqHRR6q2UGy/WLYcaH6UFb42yjP9hxsWEdk2khDWeHoa+hOKckcD2qA7N9x8fpirGz7bPE0BQ/7C2PSOblM8cjfZ1NFtUwiEzH1d55V5aB64HJNd/sSwfJd7bqNOTH4SgGOOo30wtn0hvndj817YsXeDPV162Pn65nPnyjXDb3+q8lxFyyBg86MsAdJ2kbXRJsJ9qxb4S2aHn7tpqF08hZAKUXZt8CeTnakSH1o95fy1GNbfbGKwQ8iDXeOFKNbTw9FwYOSK+FJNPr1mpKQAbGGkPd48py99W/TbaOAeQAHf/tMJdUNEtzl34lIqQMDUlBgmpl292CFLX+nvlHFo3PIjpMhKYgeVc5d/StO1oWRxoBVhqd2SN65tGBvBAFXZcy3/3Ci+gm+7+1M1/mtRs2wFJ/hIC1skjgpWcMzJd20j3r4wtn3wyedc9r0b8oAQhpbWrXEwk02BiiqxQR0h4uogtI8LND86mRrVECJKrqkUR+bYrSZcHYziVUDzo6xFMFEBMY2dO1c2u883f7+ypMfBTKYAKFq4J3aKXRcut7KXHz6nuVZxzdGGxJTu0BawFaOEiO0HlgwtrfrjYCbbpa3+0GQadBA2gQHy7RDWJ/fAAz15Q+GPibxlJb8+KfOuEM+Ng//CGfnzNsLzkofQI6S8b4j4Ht6KYGIlgatJqr9t2UJuSTOV8+sH4Po0j9RjD7zi9cEfhhzZxxEieulp2zdupwkNADj1+dcfIA3SjtqtnuX+6tAB0I/2GfcODf9ZEUxmANJJW48+AAUDO3sGYLCWtO0bt6fRe0H+mvT9fnf6OT/lEPly80Rd1/fEbnnkvM+6yucDg3+Z5fwy6PibWDjXIbybCft3zAxmxNC7UgMtIWbFU0qmYQ7ZOOkX6eHEzGxnhD+8nLnYjZZKPSU8v7JaW2WQewGqvXXLmShz6GdM15c5e6oUOyLawj2s0Ff3rhp+7f8ih2UnqiPhLEdubpEj+uljk2sH33hlancHz6xwpelJGpItTSQsy/mF5JBqPD08VOFO01Ha89GcA2SvFz2EyqtGw5cJaoRHj34fYXg/RfXfjXnwxnn59OBfcXAuLrybaeK09obXx6cSGPWXsh9DkD7LEHMb6cUG3QSCN7SGc5zSgO5/AaBO14kk05AOI/TZjC7ObkdXuxS2tzokK6vfo8x5Qifd/CB6ZtyWDL7Yb4Np7bCOmS4sjPok2q+P1MVMibRmUkrik3bG17nLKN1YqZrnLIaqyauCQfYHDoU053F4/4rE0bpYLZW/PjOVOxktEu0BDxLqu2vKORl6hVobekrMs/pdZZgTM0g1PlvJhtH0SWaBIyqmsO0sXl9nuRLMV9oEmrSwPXfwIl0xH5ZLprqvyzMKuwvpR6kpaxeCeFbk5PJ8KpXA5+GK7o9gffo+ICzV1nCkGOwi9uskag6vOjUPKkITNPEOmpvKHn/Uvk4uFmj9FKXCRxOb65zEGQaeNC/sVEoebEq2JntYviL62uWrpnNYQthPyRMXN5ML0pEkata3+1JTL+uzADPGPavCsKUlZNi8R9zugQrj5lCLcQu6S6mvtYgW+isarTXrdVS4sMLvDzFdBd8iZFaqVMzAI1s+01DIgVEtwcei8wRWNSRAeYzS1mvjBGPACdj7pDVMBGHUSKXp750axo5qhgn7ItXMuVBALqxVKHKvgAyCqmR3SpWcrWPW3tgXs/KyfrNML9V2cbo3CXJeTk55liMA8+q7n1xrI5TfDMl6AjUBeWAxVXJPkk2tlFeeEBNgfcwyMJj6oiKmwUBnZT+dacjqy05N5HgKNY9EyqNScsGf94t+cop+AhG9HJhqwvRatNb68qWA+zGq+/rV11+sFwlp5dNxXP5+SDM0qrM2yyolkkqZrPn7+bI7XKqjPmuj0dqeUWnPKsUrn+082jN3bm/enLlzenHn5vc6PcucuT3vFIgs7UP6MkwD5gYS6S5OdUw2JfuEdBOXfndT8Q3FippipZpkHkjSL2JbwSknTkQ6o1+KP0Yqt3rBa2e7V7y5o7Mt0j56czOJESZFpP79Agn6NHLsUxU1pROTM6YiVSMJmjyJyFMpUJgruQJba23kmQQumzrzd0ra7cP7kC1edsuDT9zAuhQ9iZ5Y9XPqiaRwuqoYnxNHJ19oyV1gG3fypWewtbX+Kyear1APWILcpKyspFx6ypymezLic/Q/6Oubp3hdpzDkW9JzgQSaYgbkMhLTdBm9HHOiXSEUzPuLvOMbST0xJvOg0GY31MmoV1es2JicuaXkgQHsV+/1IV++BqGuBVjzF3WFkmMPAPxrtuEKi9Ashoxl+kE2O08RIiymbPjPJfBxSOHwOV0Or0KRkct53vNEwRSRaErBN2nYuX3Y0p9RKOptDcgUCfFxcc0NiY8Xru5AO4Bs8CKMX7PmuDiKtA4F24I1nhoXF8D4EgVCp7c/oO4Ht5zqFfHKdU7/nEBP9dbaxEsNWD6lWceQqfeQyHt4MgaiA6xSmpY2u3V1Um/SlzhoqE5OjI2TJyT1JZdk+OjpBXFvfbHJisISugpsbjfGGoHOqhAcTEp4nJJ0fkA2QEjlHqSSssC44nh8oOgW97P15LnfZGQeSE4+wj1RDuWE3VNlX0oDtoS2IiMYWFSCQijo3/8LDg4YT6p/+sD0Eyh6Um/6xnFnAChBGABwkQQwwYHdgsNlABwuHUf9wvjh4vHnk+VSAYjpkAiKAI7EZeAFUTKh6IICHKTDpWDS4UKQNCIe74+nqTXB9U1Om5wmsyXkv/0F6Cfnm0yeTN5H5rRMIg0AUzDbZN5k3mTeZF6/lEBhk9nRTDBNkz6YJnw4TXwxLo8JBYhuGAojpgskRWPTpOHThBHD4lvEfoEoB0yTGONSPH9hLuAOi5/nvZCVjlaYGQSABIQCpGqahDlNOj5NCKaJr4+oQXhPjkRbjIxp0pdnCl9RDH1Fep9CwoImDEtzYWXp/4morlJXq2vUteo6dT1sgJNiY+hGOiOQVWQ1WUPWknVkPdkAG7sqsH58qQQ+xbLQExoZWQuC524cB4l40iAYnT7+31v0qf4mpVdpzeFsLT02ZYe4YdquwuHGZ2br+43B0HuZxv4FZXH5v2mU6m9Xuu6bWDzX3wyptoPSm/nvkyx/vFQW5CyTZkknCpfbhHSiLRzhVfyG5UVOXI9tyrHK4hXtMmcoKp7JrLW/DSaPhh4tR/LfZYH2+rXlRWEeGqqo3v+lie9n+8f2h/3WF7+2lcWbdRNChEGEg0SQSIjBQsq3b8rD9J8tZRciVE8iqleP9vBEWvtfBxh6/c8ZcDMCwJgOAEP/BqaB2ryZ7qeqHTQipW7ZySJlK7e2boqisXXVqLK5cc0MqFZvZAxy5obg06HWeiPQUbefPBMiiYu59RwqmVNrdQnGzqybBiAC/Myptd4I6qhBrcG9Brctzq2b6t1BTVB/7mRXUlu1uCSiac5T16He8Rrg5uSuVBOpN727FJpq926vcgDoSkXmTgFfvYPZZWpbHITp1LvxJoIvKp22q0wjbUJ95V3HZYFt95JDx81b25/cYIY2g+zCRG2A82jurGT4E8Z3HmSC1sL5TWCp8y8TmzeRbt6a8DT7ojYnnnQ3aQM7u+CsFDgI4zvb3Ki1cPYJLHWO8n5b4jjlnVrCHXjbm4t2urMHrxs+OEOc9DUzuAfkDS5dXFn5LnU8p3yZOknHLnCjPqRP5u8ZbZXN8oFaZDh8zfTSQ6dr7izmofNabMYZ5w2gw3d3Dkvx0L3T9XYOHvXhkqrPs59D5+b2p+vrorblCXVu1ObqxHY3aVUVccB3dblimOqfLFXOWdu1ofqxywd1sJWzQnzPY6MSBdRfNWlTpR4+JVx53Jy26n5Z0ZLYVTprum9SEW0q6MpYZrKIdfDZarK44lzmLh7oEZ7iXT7ue/7S+JuIJiXWLI8tO3P0+YNYX36dvJpW95p8YFZb1c612+15e9d+dk1kaLd46DuMGuaPGNeFK+r59dS9wF54r36ihpRM5mnPTA0tn7vOA+ex88x5XxcNy+plfVAf2af2eX1V39h39zv9+cJx1A+fsBxYji9/R2idKCI+/+oWra+2qJGW7czOMGrmbt/uxe7LKHU04eo2WjU6Y997v2i/br9j33wwCroIDpL7boybVduqg/BEoSWPuZ88g34PovnjonypICqOyqYqqKV0P231ePYY5HHIdMNLqjD1i9lnY2/qldQ/0iak0dJcaV1pm9Kep7vTg+mz0j9O356+N/1K+p/pz+mrM5aRncHMgDIsGe6MYMbSjKOZUZl4ZmXm/MyDmbcy/8p8kzUxKy2LkiXI8mTNyPomm5Etz7bSR+LNnpm9LHtb9v7sU9n/y36aMzGHkiPPCeScypHx8h+bQeaxJbbHqtkC1rGXV/kSP+QLeMofT/H2vCZvvjd6D5oF5AJtQUPB0oKTBbdJ4SQhqZG0jnSJ9JrMJR8tHKRUUJZS7lM/of5Om0r7nX6cfpbRzXjMTGceYLFYW1lfsSexC9lctoqNsdcVuofrNuia9TJ9hr6Dvp9+Zr9Rf0ffYjAZlhl6GEYbFgRnjEHGfGN/46RwbrghPBheN/7xr/Lv7z822h2d9P/L6tlprJoON7EZ3/DSGDhtbIETT4g3MGzS4jtvFHB3+I+h/NnnND2/7976Tci1vLnGaZ/Spsruv5yw+dienoHX/X6oA+sBp8qd42LUnwnnkoX7/ssL8HCAc8/Q9wlFEujBRBUOVvhceBmJ1gejFXwUlebfNcecYNeAxzE3XKf+2961lfyT0ByOw9rdcy9jVX1w9egqbQuZ9BNgtv1J3Gz9RvRf3yzIxWnw2zD2M82v8Hs/P+QApj/MznRQlihaCV5811SuFzEuks9ltYIXsOfIRfbxldiLm6CzpABJzBgX4+wGFYbRhHxGw/7OmEd+jE1twmf8dIMxpTh58d7zfz6sejV+b/3p3z/dvBC+hzqrV5o0wEFy1Y2ziOGba/LloeQSxe92tgYlBLXOOCBnSs6TeOIYP8UvNGGpmxOY1WmYpc2njUFX55jUmwO4kIHRBzVEGQo3mcFxzcB1IHIo/v0TKN+Y4FhPGpV3tx6ITHHNiPwYsMr78PrjLbjnIeYcbsysZ4kwU8PdAjgJLVqFAr/VYVBQdHfAheO0Ir0TpoK9R4JOIQ8Blv6tpBBzjTyoiLFxEBEf4fl7qwcPix/MG3cdAhDDGdIIe/3RaXUAk17acAjGaSNotNyrE5Kam89231K12+svY0ST/AwVSC3SRQEneBb5DR/GEEhoXgL+IXHgHhJ7kGEw5Ay8EOjFbGWrSrJaP77qsp/mPU7JX169+dklzCVzFJguhYjKYNVgaNM+G4lL+pCgez40vVkYTg2Ln8qhKVRqVpQB2aYVFTFxOIBzSeD2a6uLWV3fUkqyuBcwixHZMzJIz+xIkv7mUS1v38fp+msBffqP/z30j0nopEyHTteMpC4B65Ldpzr/h3sOYs6XvrVy8+KhdEqYyt7TErXgEkIQwlwuf85nlo/5c9SiZXCmoJWEWECSuY6phfvSfjbj5n8/OlvaM3rq3UxtUeNRxL4q7AMmnKgr3FrXLpLe/7wB3kDhf933cUp+7zf4CzS3yTn+jQxkO9kATa9DQ/QS5dvTrSILZhEH0B3y2oGD3Smaq4sUtoSyr7ub5ZqaDZFqK+QkDLsbRjHrska+4OggD8MZwwvOin1bevuFFOU71nOGIv6LNTzUTOyMGX9Z7jztbxbXRHd47ZcT49EZOzA5JlirJnqOHDKGWpGsVje1wL6MHxeoZQjmDBaDEOS7rnh7jQXqb/7Y+pbAXmgVh4CwpQVhuwxi1zOXfuUetGDPLMOXCtQ/bTeXEezeH3dDXJ8sgSVWfudfbYGg9MAFvool+sfh7un8E7dJErT4uAuwOJtZgZ36z0dnQ+bu++rGTtaFtYOThNVVWkn/QQ1MhkkJzZJ0fXMFImMKkoOCCzh4c0AwLkCsJEg6rVoWZu1OjRuAOxgEGtDAH9QAzSqSwUkL3BBnOPQ8fsg9ZmDeuz+tv2ugViLwPqQsMnaRSJsF9r9b8efztRD84xuzYTZnAVgMyzB8FW5M9zPd2pMfgn+i1mVYDXEay9CtatSiz0kJfzubmVdZSKCrGlMCZGXh/56UCLM3B2loysDu1DZM7WhbXYcz5OZWNRjkgiEQUvFSoDv5X5kjgs2rG/gRNpKnOGRXk8y6ZpEKXFVLXII2EiJJzRoub2/5ft8eBdHDGwPmt7PD7E/Zn80wAuA5YqkLjlpEyQ+3KqLNl8z9oXmxKMRKGZhtYCQ6fHQ0AmfmKItJgkpk33Mv/vsQfS395OwuS1UOUlkcLPccxJ22mYdyKFdqDJvkMT1UE2BDKCtRwqAvQGH7TDoAe0COZSBAp7fub2o+evah0RvYoTwgS6Q5rUsCFfyHSe3ltEyOSjl40PeHvlMSzIJZb+AwVDd9AOAybielM4QMVfVwY+/cXW1E38Dhv2j6XwyKy4ze+o76Os/lTYAk6a41dk0dcTUPdHiSjihzPE/2uEysW6qM66BrQehI9Cu4i0puqVRfAZ1mnJZ8MGPgpdNGIx0HKHSweTjm0RyLh7EzJVFnkkKV/+rSpUfr/Z/jgudfG9/F5k3oAsUpwZkwgn2Jm51eSwfznQP7uKke2AgbDDuXsTL+eZwKXDjL5SJDUkTaYLCzhhQ3cq/enZBwfdkIGUYbgrgCQdDuqIYl5UzCVDegyGU1rErJDu04HtCNTbOLykVOpJWb7ExVgTFfdtyGQP7uDu7igTcm0HPc9ijl6T956El19sSP4L4zjoy62I/Cui3pAoY3XBW7QCJXa5amRBjZtCSGwpaqW57nB6FLMmiZRkOsQhoYlQGN4sjUwDeF93MjsPRgr5Xg8fJfQMZ4N+S5oBAhCtBzAjFSuaW/689R+i1fgo9qNROTAChNsyRf3p6B3sGCmOqEMwF+tG45uJ/BOvLHbN3ABJaOzQPUzdHwxuI+aDHG3jed/heTTr5O/WY6fPt/3prV6MlZ9ZB6KmRXtgvs9cX+S5XuPyeKcb6kfnTUuD6LhpKPZ6tYyNTtgvh4DCmD8Jf/PN+I7iTRQaHAnXfbjN/uPfZmpvP0OHkL1AABL+H5TXh8Zru3vvwEPHphI/Of/p/UBFjCF2fw7xYPHGv3Nw3qJla5mKugg/954N9v+p8Gv6SlRTehF+MXxwFJsdnhIAhIPkH+Qf6r5y3yY/JL5Fsb/gY2O9ugtLvCW4TV8vLc5dqTZmuFDKrLRptQMSYM0NR2VIGhLshc3Kvuf7gBOEHOMdKQCz0wvRx6laZBnpLom7kaeh8rOBnFQF2HCrFckmC3wCl2NZPhuB9uju//jVJ3PSTXdyiDZssTUeAkLz1/tY/jrvW/ibZQWxPOxY7u9EnMuaZfSEB1p9CdVrLaT7wnAVdfQafaTpEf0HYBE3IRE/DNYvBSzxqwhZM/+wFctCjes3oIISgAJ+GcaCp6XIwxEgfDAQPzamdcFgOlOsSyV2dk7HSF1zMrjjNVnRNDPjyD+2LVsGbZ18ceeQovARYi8CpCWpxV9nFMciyjKoYDqxTdy/ZYo10KN8paG5BkBDuqVG4WpGGkq8oKNaKoZSPFgbCrYb1ZkgcFZiWWwYHFTh+LAYwc98QZAvd+ibMjz47DnZ0PV5Oz/98XBhuQjTinJLuqseV3nON3NWWmxFSbFBvGwmen92G+NQFZSfV/GlZarGYDJhO/X1B0u8EQkj+0wMyG4SnODZ3lO4Kaaroxp7gNhqnZzRh/QVZ8N8YAsTTOYwvJ9pY6ShF5FEdxC3P06MajYPQAB8OiMGp1Br0PqReKLImSpg9lGPSfHn7HPvb7e8X78omapX4KIzTod2YJ/4gMFr4WZ+F3Ku5Fx728O+FtZJxnKTBg8sApAH1XuLdcHjvdxz4MUi+c26FFrLQRpGSay25gd3pQFUAcMxLpgsV0mpyI4FYsfOYYrzas9PwYs3aR1SprhjDjAa6k0AQ3lLraq1BzwZ+84p5jKaTLSNROggGmI82yEzXrk9zT28hl0OqT6KGhK5ywG75Mp9X9O134aAWRT2V63pJB7o9dFqI4FwHt5URPAZYRT3gThZ3Jd2iG7hHEnfT1WrPNsMfPjwiYMNn1H4S+e1rFSxtTdashyHOgRqPclfHzez52FizzQGEJrFK2LjdFc7X2IywJbQvTHPsmqqogaQVNGYrlaE5rqxPio2CBOBvMHz8Tg3kBYqzDGsINxYxYQGMbxRHmlO3FsnGwNc7R7PcXXnZHpxkllRq6GYqxjLt+MA7q3X/Sd2dPfreLCPlx7Xg11DReK0lZumE5QIq1JWLCF6HpVMbf0R7f+tqpt5Pzd3iHiTBJzq5cz8nx3qtAkpstNA8pSGJuvtib3rrG975WCnw4US7+lV4llhY+NLBKHq9nRdWsOC91/Uy/mLdvN1YrfH+Nll+5sKNOz60jnga8BqisD8+6qxO9LVPDwCoeVAY1BfCVyDnIAIA0MGiZWvvgRRWYLo4vgfKQlAdJwxhfvxy37bCNSyo9KlAHDRFm8w91qXItBS9M1zFy/fKBS+jG8J5/d/SM7GX/JA1uxL6siT0sUM/wBWvIahy2X9rATT4jvcloRw6yg+uRRyFLCl3fW8mOVbJrW1KlzQFQwwXG2dCE5PB8olzHRVMaGKuwkyylNlbC7QMTY/ZhYDIPwHbUnkDr03HealmR2++3KUH2CFSH2C5XLqEyLj/ar+x1gt7uOl4LtSGCeKOHJvCxSKdVa3uWiBLfsOtGFco7HFstKQ8dhMl1RKAYyvK9FqrCy+5AdOPCZ3LSWJV8/x/tlOEoRcUij35EI4OLXox9pdcZdLMk1HnIP9BX3ZM9D2oD45bKksc5U2rw8e4zFeOJnm+UYCbmQ32NDIftrrbOTVDcQdr5yjOrBSA2TLITFM/Kzffy4xOiMH5ofUCzQc/NtvmlHrlBzFl0NsMHL3r0RgMhCCtJLi/3/KIE0W3OjRGZhwhKTxfFQ+hvJMMY7/alyUx5ibu8CcjWxxPo5PELLFBfy2LfgxsJPODB7Axuyu88vTv96HpvC1r4/xL0Y8wWZzaK3whfvhAZ/+HjjzK5lgn5+P28UYUsyIrcVvGaIMv1i4W/0+YIeMkbeSH20DPHc+whsekewfc5hOaOzNd/7K845plGpVI5LNktgHo3D2bBfDmi6GXq6cNxsuW6yIv7UeELxWxWnizIeVZr2yNSB61IiHEqB0713gaqYWn0Wz1VOs4qbbh3BCtsMUqiG0mYJ35su9B0XYsWvlpMiPzIItssSSbJoA5RyhDyBCWr1M9Ksj812rpV7MTJ70HHaZBBAVThtSxvyYasoLCtUZFru5VlM63PtXwRqO96+kqbyF+pk+idW6Nh0ew0HTnIv7D3xzvXJw2ILEOXWBt0zSdUGrTe9fkIYzCByoYeqvoaXTHAfS7HCpC7gkUG0pDywN/fy0cthO+29xsggTK3YMi7PJsP/vgDMbrERah7Pmfl299d/uzyA23jlylQEVHEESZLjisV59LErZvb3XtIOLzmGfY7B0AcLsm0GMkGyfE7HS0rZN0rK1s5hK3anO9wvB3ooefMul1SxKWl9O4LbYu4RwIWb0BXkar1WeWg04YKEVQ1jQsQBNwaaBezJL1eL5OA28N/4ahC1Iff1EYyLygHAb5rlu5wBzuZyv1tUGHgbd7g5HpWvsVzdk50RxPTyHX/bYcO4h3UZoQhzplywlFLFocWzN6YVDI4eFEJcck+aqRi5XB5MDF7khYJXDR0iaIXujSth0vZSFQx4pzv0SQ53bzCUL0uj0qRN9+sSBuKccCxNHcO7twE2WszGwdphi49p17q9/pp4alytlO9otXt50WxOLje7KMk2V8hoGqKGBJC8lwvO5XmSkCR9Gv4GaGuV/RgLsyNR7j81Xo90dBYXi2VZzVLY3q3IrU7V+S4XpmcQuwpau3zKhtaCkNbQUNJX+l4oF4ndMyZNbUKBYC6dTCKsS91upEfh6kPUe14rZNF7RTL+f623L46O9e50TgwUWv7DpnVuFxUyduW1EaaJTEhWaBFctOeOupmRVN6ZmCLF1pJ5iv0hq0X7hjsZpLk+SJ2V1owj1PNwysXI5ZNdwbqQyUQcFSJtsp+KY7iygTkjsNGbHQp/22iizc6hAiRbaFIUDW83rxDXRxcb8YnySEJV5I0YZ8ORNNLxlyEEEQ6PRXuulFvOnAB1VBjt4Gi4aK+TOiWgRKuCxR3mVLh4cEMyHtIoNWimApaYeWXKuyauT2UmxvaZXcXugs0X5es39h1DMtPM67P3dcne/Vjsz0Xx75MgjwlKBWdH0mbIVgL69AEmYzo6ZqVMVpxF7k2naF8rQ6StO1zeyUK73pb2pwKhnlVcyFzguc4HamJGU2gJtHGiKrEKY7zuF9gTQKXW7YbCWkn43SmGvorfeFisSNXN2Y8kw16FGzkSfg+rQ3j7XW4bpp6poGZbM1bAWO4PQaPWLy/1m03MjYmHNbmaumepzFNproqSrLISDFgMSyNtuDBAscrhevW8Z4g8d58wJ7rN+LaRXPs80Fc4WnDgXGm0TTcrQhBSUfCTYs7TPLVRkG2aDLY7lHpV1uirGNnRTeATBY2IlEIl/mw7CGHZwSBurNLudHo0IBIXOgEaag2hNTeRuFCp+VMWZMHcpM8Q5/t1/+93CPPbLp+8e0FRfJFopsIWex6wMgdlvRL+jJI4vS0neTuZKuQZaRzbAmZ+HPrY5sQ5EKxKOuWJM9RNN0+bHvi3vB0T0OrWlivoM78jDBO6EX5hNEl79GQeK9qvuK+1+xwLOBIkAm5owd8lSORolLktbSZr76UNufH3m3pWW8UYACL1PvOJtZfOh608B/39T3zA7Cz3kWkGPpZJtAy7JFY++iAunl4aTfXW+xfA9228lq+8h8AfmJiNJB8ZJ+O3t0pyIeYcyZB8RXNl/gguJlhqITfZgI+8OF2u6F/PM/dFdTr2GuvSmjH8ExPul/pwczGe+wLq/9dy/w356WINE70JYpUCf/nzEC2RVoR92YbYy3UPslGBxKvGy/mVB+u2xjBf5QQCzfSGOshzzNb4ivYzSvtlFwhiuvra2E4TlOKfpkJ92g5nhDlGgKfO8CEmhvk8l+j3v+8AN54G/X4z98Xf56Kn7YX3n0LwQZYT3dgklazfAapZkk0CrWBnfBjg2KqquZzbQYkDTSa6R6rDVQFHINB4KY7ldAGEpJV07Avlf1xtiS0lEpFCl5zoTnNxnKVc2BHj0ARCeawnRnqSL5Ey2Ecw5wkzpk14Ti3kQWnJceAI5NjzFXkPQTeRMyVUvGRPi8rXrwSVikK5KBhJOChEypUdmQ+oQLKBfWYmZSC1JoOIZlTDtjjUojapo4hCGP7nPLm1lSvtKooQD0+ozHExRD9vvQqxpoFADSJAXj0GqRWsXsEZqOkkZmW+YXQ157fDdtn98y0RwN3tOfrJLftTseKaNaZtJIVKCmTbAyW0Dpw+/e2ZD1xT4OJuIXQIDaLcaReT6h/Pc35ODsZHxeAZX4MRk1uRgF/k745ABokYL/2fhesGIAMERlnxl+tKiFeKs6/MrkLhhn8V8/mYjGm/4ffruJ35sXy736twxLO0LCASBSB8i5Q5FXT205xpz5UZHOZMoPsGmpXssnUnpb91f2kQsa2etow9EPpXVnYEFRW9QwBGtkcVKubCwLr1uzef+6O9pNPx1d+hD/HrR3GlixT1bv7MycV1pTaAhfSA6nE/S0+5Ds+MalFRnSV40anb8YaYS2sXWFMjRl6inALerxEYwMhPovbgco1/r64bqk1XHKS0rY91TRENU+LnBRdeTkK5NgNcpiMRvGWIi6fLNQrC1WkQ8yCtSFfjGHD2RewtHr2V6M/oUacd/On/wr0rcPrD4wnXuylS2AjCFUK8a7maWqiFRtwd3N5teTIMabO5+3vDC8LUpRaCLKUxrmvERm3BetWK1gQ/H1wjXrsKcN37xCTr7DWM0D4grrw459quzb+e5N8Hrwwx0r/IoaEEZG19FTbW4JFdZLIlfP77WXc2meqRKtvj6wSm4RRho6j3fwmVUy3103U5vlpXDvaZuXIE4xPGexkCJcVQj9rMUtvP9LqaQMzffbB79LNyG3JCs/mUJPBpHrNGeVs8tAGzCUvH1Rlx4jG8dOlgGRohkvNUTRYRzYksAPPVrRWBPyykATxrAqGdMX0ZQVGlLZFsNjzPGTiJV2xZmOEWKWpc36xhMloOuAuvbPbXS1WmHEBgzs1fba7BhoI1cv9GqCxUCE6DIQ1w5HA/fmVj6dnhxtGy5J4Vev2lgRyKY78NB48NIkOCqZmD4+si2Q1zOCmaDehyjghgZWPlFmqMCPNBfJ2vl0czs7f+PZsSEmoiR/K2732YE0l5G3T2Cj7w5dGo6mqvD1yiUX8tNt8svU3SygP22OpLSYfbT86O/PHE/wglAvshj0FtmZ4Yuq6ynubKKMkmYlMkiCkHvc8RVEeeAQ1MHNRVABMV8pHbHExgEKtJEWiGuIRSalRgRofFFY62ovD19qTmufN9TsRLi3UgPayOZJFSnVzzozBzSzGKOVypjDw6hF9Gyv4No2A9AP9BAtP9AZii7wL+KbOBCHAagj8Hp0PIQ7tkIjZ9jCRdPuBDXJA3qO3eAXvecsBUr+4rC2kte1NRnnDc/fgnLazKHZslbE2yWE0KAXL3IX6RjhqkGBaYgwTRfNMZ6uW89ykFUvBggeFUbrXFuW9NDkcIBrrMhk7znCxrL3gU1q/cqu6df5LzfEzCGLecDj/NvPo9vYPB349RuzJnBKu0yHlU3mhtoiGGT+IWi2Uhb84+wkWvMc+PbX08d6jqPp94wDgLAQEMA/mFUaX+0zHxG6Qft9KdpUtQ6mxzutYMBbJTnk3UeRyzRIHyaQzyJlSLLqYQgJxoMDc5dhqBRKCGrloBMYOoTgw8WPlRD0aeI5QTNa2NPDxjHGQLnWTj1iCpmHpDCHsxIBWGhcjEhBM5RCigj+9QnXAU07BBrrYzPkHF/8a+5aPgErJgMAmJnVSgIv1ioauLQYkkJFoVNCa4EmybfVif6vUkx+Md/oT3dxE4hrqoFHQAEZFGaicWqAtSgO/aBNko3Nk3QFWXnVxPga/L16HIX68v+gjGgwpUA+z2MNCByKiDW3JhE45YoEgrAoICK5YNKTmHD2GaJuN73nAobuu0/UicrlrCZJUnnu4DJUsWD8/hAy+k/DJX6o79YHxEfueyXqJ2YlSypyGmHBF5mK2zDqrUfr98C7d3+OII4XzInYhSx274UrgVYAzSigtnUzlzTme6gAEXJhgE7M50x95Y73HY2nosh5FhK4ptXu2ztOyxWuZ9x1IE1dBhkmplLuc5zMCC2EBtukcVvIurY2TqTyJgwv0Fsf2lSJl3F4LSnAZex3iPgrwZEq9w3hMnlOzCxvdqKSJKkERlRKCGiw2ybJrn4yUq3UPXp0p5ZojzJlbPO/Yiex2DhVqMvFOEEfpEWUO5cmu5DaCTFMq3zOu64eVDwUulVdALmyxIa+lJ6NKKRLyI6xroTO+RTT4+LmwBReDjwuA/pj8awjGwwRstoRKvi/74HbSWIPUWs1WB7fgGGvUabwOMYgy5KZ0CKnpYesg6Gzac1MMxGIW3HLdaw4Pgn2klY5mlvpFW7NMkfMjvXTNjnbJhkNFEu/jQuuxTIjL5UrQ6t0W+j2Gi06JkV8weVmr84uFDhNnWNJARLO6msLzzEZTpjJIWQJMeLri4q41DoSAgIQYuMEGkgOxFiNGhayFO6eiuf2E8TAqZJl2MwXK4dmaBWByI8uBoiSlpGRopnuzacI7LyAEHRZS2YyXhn4XQRACn8NoqrlZRuiVNIpz5AEwbDnOVJn50iqoowEbGnLUbcV+FgSIlJDx3W5JRkk9FRg2wAZBY0oEtZ4E7YF1lGFmqAA3p3XgjmkEdl5UgJ0ON0Dsi24kO8pj1cLPRhUNCt6R0RSqDVRXyAOqe+DRRXxNEY17jSo4k+bdb2JuIeG5LoUgnNEQ4h3KwGhBE6DcxNTsY6GPABjn1UIzMAQoQwRBR+GJtQ2DVHEwbKrgyBR0k0AqoANdzbXG/KV4koTolHStwx00KxX1icDuCjaE4eeQ3lsn0y8gyJ5A3UXqubb1l5nEOnDZsjH6L9y9dQ0dCsyb8smFNEZSNOa5fbDzw+N5ACqd63A707T8c4vkiiFvJTFGo38hjYLVtyDvS1Titz+VxgE+/teEggfJ+1YWLZqA07CASkyJTJDbSHqZ2ZQuzq7QCZjT9cyjwIHAMiNUs0Qi9ZWVAg5TxIXz+GpF6kK8USAq7FA+Q/78/PUqK1ZMwDkSiUj4i4P53heZDamP2p8gGng6bJKShzhk3Pz1W1LVZ8zGClek7YT1/kpjjgzD99oR7yTHpe1GaMl3VBSaukZ1E9qOobhRskUNqCqxCo1TgpYGnVZYwZ53bdvjpSXLZxSqr52IcwXXViuDegm9UDTUakijadjiIWnWRHrKM5bkPMbCoXeCYAWs6GzFhE2xinVEzi/X1QUeRUeOhJbpOEZedO3BR3DnDutrdqoF7XKo7+gw5MBYZcvj5hlQtfQh5qXP/rfZxAAdVPth+mS2yjsczyv1cnWwOT92VkPUUgid58VIGrQk6eVuO7mH7SajT6fKRYdZ4lvqMO3dzdvarQyli1tQ5jM3Bv0+01D3IQWUGQUfahMYqWr/3FKbrNJLX6xN/OzY58eJD1/UKlmGuHb4/B+r3yUeaztbSuK/vV68jb9243wQcVkUaIWugjiviQiNmzNBv2SN9IfRnfNQNGDX7OCW5IZ3ov+WQsjAvW+uZ8ch2e1cMcpfliGG1lXpi+Fz+akGfnSycI6UP1ICGRRfmResObpAv8ocRbIDXtRqxqlfXTxfeSM4pz6Jr6WVOjyVQWOLXDGppcOrr/XoErhvCaX8FemXtxEI+T8+HWQboTMTBFhiwvd2MfJGC5lrqfoTf/lUnz9Qwh9LIDIsDjPvY+C9C9j1tGS/oGKHzgjpp93ZwclkKl9y5PPKO1UgzKS1kqtfA96I4bdhFdyiPa03NlWfGYCN9GfUQKh2I5GK0CyyswbT8dbUQwiU3O9yVDJJ+6PDC91N18oxtOS2GvnutnrBus9CkCN62wwlswZ4qTNLBB9gV3zkmK583jShaK3WkIeLNp7IU2lXKu0YC3O0Ll7xI4Qf1SjD3cLtx1ybZAaMUYG16/H7TaGgBZq1RdOE3NRxU2H75lA8dyFFr5ule0KoGIamVbwxNbELFtiRGoxKtHKIjmtSbAFtU8wCz22LttguU/3W/q64PT63fmtXt0K5MTNgTpAErvHAuuoh53CasS1Wu+MddA2DWMfIw7omJoozZXsz4aSeZlGWIyMTVbM1OSZWkMmDb5ZR6rm7ZmAzuKYiHuB8zZtWRiPnw0KhcNBhmwo8DHorD2W2QF2s9RAyRwtvqpecNG6P110XlTh+Wj5naOxU+0IA3KeSkcAaxHvdLiNqbjqaFHf4ck0w86XUvkQtIyiIFdB1m/d+GG0T5ARXA9ddmPiw12PO/oVHwyNtOf9h8uXsSfBVMvIAh2N8SI56K0Rc7S7t4EoUjBNOY2czfKcEyIO8bsXJnj/VWcIT8Hf5koi7x2cZ01w2H3lFwGD2nX/SFsnjSFjPqmf4odEp4CyJrpW48xM0MO/RFyq3MTdAefwDYz7QDko0urF0ZGMyCL0I8mLdyWLtq0g6jp0zyLFHVwab5hXji9qy96V+CW7RF2f1j3Z23ggtGeiASmvsNKFsJhq62Ppb7ntFC/iOSGa/y7bQ3K8mNcHrx7EmwaNPXz7ojd5PhimWYl0a3/gN0S56dfN7CcBOy+dfwXXsdnGb/ysEQRJUIPOhJBcvQX8uc4INJyNAGuMIyLofZfe7NAVPd5t3uuu3i+vdtNEHGXGLABP5edEJvOADR/7cdJCNY4JrtGo9BJzXWfmHzd0n8LtN6qU8SQtJjsGNM8YrzCXzyrBsJQbXSHUiO15WJ9aCXSaOkWiHdplHS+YAQ45UKJZhZllocc8zVcnywLkyUjwTipRqb3NXi2gZP70/qSds+as6jIke7g1wO9X31UHYTJt6mSNxeikyQbgeaJQ+dduS/8ArhDNwUYj8pNO9xWk8R3xWbReo98fnkOhlvplXny8K1Hu0Dn9OwhgtlwoNYlK9EJW0r0gFSsVYmq679ocJybw8z+AFSywtY1T1sszYrXqNEovnYR7hnUHJbD+AJ02Ktn7lWD7DD6Jtt6OwPEQDLYnKPTyuYcADmgbBFwIc6d1KNtnGdMq0gedzFZWw8P3ch3dupYfT/eHM27wlzzPv35uG5fXzYz/xA1uFGPP5IsZkcZPGEIYwIl+QKaokOJeo5KcWikMVf8vkmZ7bIC/f6fUWbOwJCd3EKRCr4e/HRw4PAgC0w9oSAhMeLGaZabCCtaSPkxSXIlnrX/FtxHcPvJ3adTZlFKJ6g/7dGPsaTBQ8BE81i9E3hKfJbqfrdBbPNPgRQnRRkt8zzQ7osH9tlkVxb7HLg0Hj1YkchOVVp3c9xU2RpYC3Nd1V1ezQBozOw/s691G/792Ks+Xc+/cL7V0o6gcQ9jYf6p+of2qZFbIMO7CB2zYIwf/XmZv9/iqoW6AS7K8Gin27yP+juXINL5akeKeXjg+bgcUHc8XLLWvbIDWAKkEtvMTnI7kIn4VjZIuBf77fRyh5Rt8davIyNv6GeM9HUXdSd36xB65sZfWAOSPu9USXJJhHkjKYmCu0GWswYYzgZcfU/i7EvwMs7zdb4dhiInipHcTN4v2XkEEKZ7p2Fsq0BsU5nDUziVXpmCWJM5Z5HnHOYOLLwc4O1wil0sLR0p67uP5G4zLirKo/uDEmFYjxIPlfdutejI0yNe+EYmvX3pLDQfywVWPaAsayOHEvN1pNwi5bJ44UArQaIB2dgxuAv/bnRf1YohpZvlDvvCSJAKVab79OPNnHsj/9I0h0oWPUzORR/+CaGSz225MVCQKLLg//S7cWkSMspp5pz9LL58qfFyml8jeVN6usR/mNnVXOYg90oq8Z9ZFts/MI27/RdnWtbq+NLkflR72rO6/rDjzBHcuP+5v+mCAroxhGrb2vpFOox2v1H7SQD2IP8/88j2+tSl9aF+0DRlA2qaK5bt1UxF37xT1wSh6fMFGhguNK8W7nTeHE7C2caec037D/8U0IvU8bWmWPfueHRLkipfVvnBY/N8+b+zkgG7BmUKcH92/xgxR07j/av4NLJ9/f3jCUOHkpqnhtjKbl2S+afl7ozE5/t/b5bcz2SVeEA95x6WR3wwHipTu7CoCkAUu1M/si9tHNc68B+Dhivb9yBITfuyDLFut9lSMoRC8D4njhza/2/wnD4GLZ49ClFHa3Bf5EjQxfiwIX7ZkUwXwQcsyZXG35f+WfXbnwW/vWaIihN2CRcNv0yn7s5u0wfL87KEJZLcGYuJk/vuQACXxgazIWNdswwH++2oaOZ2b7VeaydWhfQIyq+4H1fku0LM618fPHuTdPUctX3OwKtx4+amMXH34qXg9wGVWozR5Kg72DtwejRHU1sPwE4sEneSP+W61M/0P+FNmcaqWTvXYyf1u2gyejJwjc1F3/5srFU3CgAT2hJfhytr85v7r9tuiuNoHBWXgCqmdQotV71u95IhKAhniDSpqf3sKibQNfaaU4uf2k46qKt0+uFlld8TVJ3YEBnOBKa/6iaiqaDXLlWZy25D746KeKi6dpn38rDRnawWrFqnRgXbACc0PCIHHf/5YH2L89xlh8qPCoxq/AfDQBNcPH7SIcTnTldrnb/eCOhJ+aUkZVVaNxa/CDFpwh42abpW9M2SBU8j/VE7JK9VYt4XaIeOLp41z1tXv5p4w0IeHYRDABJqCnJftirnzTwlR3/FLmbS9mV+0bH+Wc/hKvDXAOLu3A8oRt7Fplf/zyA68WtXdAvC2wTCl3Nyahv6tfclC+Fb8G+Qr2NvjQOG96yeAG/2fCZhRl4lfS6Z1VcRuQzvocq8TCvx7YGwhVKo5TWfz/fgWy6MH11VXt1Gg1DkJ2K7A2th89DPQMIDv9RjwxdgPsu6dfCrGloSSEiR6hKISRiSEfivYVFsMm1A5gyMS+FYCA7SI7rKq2LaFfG8t9NlX7sjTnH4woq9df3D7W3MTan2VeGFwcg2PxwsxkCZHXnnTSyE/sxsfG41euvGAdQbBv7F+PXwb+uDGfvfWtp0cnAk+SA7z5mithK2/G9cgyKxzoxbL2Pa2sLcAhCt6CA/MCiqE4X0C9xbLXg8wcdH7qgrd67IE+wSDfMoy3WhnTAz2ZsbKMFHsQWgJjaZXj380yPYlA8T6my1ha2N83M4uE4FDza8pkt4kFivLTUnDlM+5KZjDbPNDeL3qYO2m3C3//xf/pBO692H6UGcwpPIH34EmPVg9D1k0i7joYXlBvbfBTec5NOTezlcPHD2+q0Vf+ExXG3hkpXSqtgbQYY0ZOXN8990C4nH2x0e42Klfyr1AIhTLg3v/mLpPbZpOLV07uXiLg2hkKtqiggO/tjo4EE+GkmDj5zv1chEXnTNuQp0Q65lAKFQkfDTuY5erxHx7baNHrBdc5JBbyRxzxetTc0GEq2gYwEU6LyVPvORb2r6afIQqHsJ8qMwZvOA2nP/bjJ8/nrRO7QXKKofDdVrsvqbrt4xpKfVYy4DiV+hMjWgz0KWkKaIh0j1UtBDWR77eqlQNwfEsDg+YnN4DO7vD6Lmk6Ou75iOmd/TZvrdUqmoln28eM6lN6/5FKtBQcFInxE6HJclTkXDJWVUnSbC8I2JRkaeA46PgOjD8/1H5yw+78bp6DI7sGt+DWj0nTXes8qdNDyUCuwdNdipNVwx1wnKmSarp+p4D1tCm9WGo39IlN3yZbJ6WP5wrDREdG7a0E7SpoQF9YRUpoKjwrqCioTYlne0S9Vg9Qs8PCaTRZCmTAGmD3tV4383bdQE+OQZkq6r+xzReoifH9C9+zJGEQhg0oi6IsstZ6TyJY5wfFuZSsKSxoQ10U+B6u3vbDbYJkRVEQdeTXV+eOTyjpqALBEYUhY8jnECoKtGzbtBoWaqCQ8nq3281soRZFIzu7azQ07TBcvKgrPbDR6Lq+usU0FG9yL5RcKrtpyI0U3IE7PyrN26fY9G2q3WU1y/YpJ7UhqzAgzAAPCpdeYoFp563qmbCRmsTxU1w5w74b8bRRvHvsRSdAGoWd4k1moFhaxdoaaTwrWV5Q6sryG6Cp1a9kiC3eR9G13PNppJKqfrNX7XPU5OzM2ebmPfn6rVs3hv1h933azqIoSUK34XqOIfOCLPG0dTGpIDkjbanr65Bjl1Q5D6GKaJ9QlMqaqqiG7ViG89Rqs9NudYI4DoJkZnF5cWltcvrbUvN4aUA+qzlxszhFzSV+jQ5m76qytiruxRmheJtCN7bVI6ZZt9PtIwt2AbbqUgdhtbpWK9xERbfxQuusaUR24SgaCfrEMWUr7ttfqz0eACJ6n5HDY6IisZEWPSMySDZ0Wf5KigJu4sTpoExE8TFhO71EnWGQoTbdtm0VSdnvJXIuiuIxX25y+5KjSVyccLWIBx+ycNrQrS4S/T1oJjeTwI/wc7TuGmgYEGqaKlmtoo1LkdnB2lqRuZCFVDWajTFUOCP5FFJGH8IoFRkZjOeRnUbyngU1qS6RZCdvt1ouu92aZ9tgh8KGE8QK46DYFIeUjTF/IJvAKGi+AP1slhe4haBmpNijtIdLgBigFyuYJdwMt5krcHiXAw0pWZhVK9LhvtKfELtOAjD0SfZryUDIRl5E2qalkjEpaQ1NC1qaLivT25NgetYKPYll73p4uQoa6v60RNXs0MYRpuVdSmgwJqzchC1LFgolBW2mnXrcUfyT8kRocayVhsl2aMu2Aa96pAbK6b6QPcyhECDmTKWgJ9KGCLSszwyGDEQXcOUyIx8OS4xTxrpIgVizOP7bDAvOS9mabu6HC4zxWFl6mvwqfJbDMIgIfQw2ZxQbj3RG4EBWQmt/f2p4aYTGBQ5Tx+tE0ffaqJIIF/cOit+d6fe7rQZlGvivCYY31O0O/b9e5j+ytZ9ufWJ6Mqj7XsGkVrHaaniOSQlSiFkN+u32LyabDq/WualhYrhFXu8Fbb/klCrdiEufIr7bbdPui5qiqPRYgrr5Lu0cYsd7ZJmjejQncH23iuU4EDoBIUz5Di9Y9jirOShGk9IyDC6+IoqKItAdgiTbjUff3I0SdBx0IuPgfyx1oflufjMuD/tgn9U+1mcS2ZLaJ0LZ2MYGpMMpvGizfx31Y4HioEqCqYrI8F4V/T7YF7CZxtmIdHuO7aCTxH5EG6V4MMYHTdvaC+pF0PXGa21pB5RiTKWWveJV7JMsItddvkTTPaddi9O0RnZrHYvu2VVD4kZaI/RNWeBIceVyXeVrSgQlNJjYil4J0nyb1XAssv6VPkptZIi3lA+PfGwJnEYSq0ABQS4pLEcX6MimimaEeSstHuMakXytTrfpi3/sa80JvWbjtoSqK2KFmleV6veP7Wzv7NVbLRxvdXrd/gqxsq7Kig5taCGfKcm4coBMWTO0PsK6SJyjSGPLOkIfe96UyPMLXRJESWRpmmF6rfrBgSvvPSnvlreZi7qJGmBZ5pbtsa9/J9S3cVOxoylwzKQHXM+fwvfwldaUI82GiOoujFaqY6r3hW77zp+QBFaJA+r5Td/z7BdMKljoRtDi+aoJ+ERFiocJRCOu29597MuYNmMozgChLtKGzHbIlUwbKWdWVBzOZCKnkYUNCSraHlFKwriJ1PkRHHK5+FzKm1zqcOezSFVHbP2QmD+qHkUmGy2PwB4aUtavmbz00ihN+EQqDUz1YysE62hLMdNGKdJsJhnZ1wwLqQckaY5VSYiuJ63THalhk9jNXE5F4VDIQjoHE8KkEQz6Cb/ieYYotrLaz9u+xplnJa+EteWg4OT6IJjgSccdETEyyAuQJ2kMEqatY9HMksN+2C8OiaYll3abrqYWyKUGW8rCSQFah5rpqlc5si6+2q83c9ni1agwKbmseFz1EYeKCSKDI33eOlFVpKUoss+09765/KovxgMPD5pNNXmuUe2mTd3Xsd8diASqQDboUK+E4ELacCXo5sHXrJb3v70vyuotj9P0j883pPjOf+5JyjdgQWHVOB17va9/au6PEIeqMMHASl1VnY1opJBZ4xfz2mLVFsJ0wDv4Yea98ctyxuh/L5VqT3j8MS9LqO40Sd6DcNk9VjRk2Eh250NqmRwcapVqgbMFTqoz98N9Fx4v27j93zt3V85Rwn6f6nyEFAzQBC9sU/gAPsSbEurYvdiD2bO9djC7XGg0vXIjZAwmCFZo6roqXONDAuaMJCf0P9tMwjDVyRGfkLMVmfUxNULcBwhq3qSLrj60u3ytV8AIpMBpVm2WFPBxhyiSpyxPvKEGs2LGGdMxuI0O+8KOtWJY2+QINMRyRlFvjazl7KCMW28SXKdX/fGplqHvZWqbSfYyjhbFdAhLK+utQ5qvrWUsEL8k93lxuVKYSQeNK/WUYpUJ5aQJFqo0O2mqyJtuh+PaHbp0s0wqV+rYBaPB0CS5xgitpDApPthLBsObpcheZiR9agEPtsARSUeIiOQiCTJnHDcgM4MTcZBq/XbepIdBBFLzVJ4KJPzsrjLq5WF8ifbrG11ChGPQE9f7VQjIZOL9DDl7MWXhzb0X6D2ghWnGYolhOaZBkLciwQSvephgUkn5X3XvaPYtZEbf/2clJ1XNaqgwqnY3FGQLhcowULosK5EFFh9RKhmovJFrO8amHYowW3s6YH0mCwqztf00uBVhyJTIObJ1H7JgHlDCCQ6igfcUEYdxnaNxoyGV+0qS3MO+7q2iZ7UDa4nbNDjNjZasmsWkPg5sUjiO2vFtVqAia/0uFIEFY9eNoxKi4JaQYaljiDRDMh/Y4aKtkjDKOBYgBgTOODg5I/aXuojFHSxgXrYZDPSTW4Z7CH1lSI4TkGBdUzkDf6P5JYy6aaTcXSg0rRmQA2/Z1NjZfWe2e5odY+43sVgKxu5/3E8Jzwlqcdi7D1tT2PpDnfJj8q40cIf8EnFOmqZ0jtIfW8tkfS28UoJXwpnQlK+bHqBAjVMUEgLEaqxfpKCyCh74WqdI144K35CJKqNywy9GFI0NN2df15CoOjP/D3eBCvLsrtv07EQUrRXN1YCbgslEMv23CmUm0NyphMe13N61wrJBn9enmThwC4PlGJZIvmrcyJKcL3oe3e4bH1//3stAAZWXMcjCugyzNiWogC5nQtJBdtfgWvOsdzcbRoIPt7jZr86C4yzYtEMSuvGsXOVIdh2JilCR3iik4tWyalRCqqxBC3pXqNey0sDdsY2nQeMt0p37b2NrrepW/XxDxWuaRx6kNH6wnsNdLgWu+ZhKs8s392lqCosrgWF89RoaXLIxgTyCLQ3vZny5d8q2p8OJbSvkbUVBk2vLB4sBUHIx8d7h1Yv7FxthNNbxeJDbMrEqLl7uz/2AS5/A3luM8HezjIc5gF8hY5wLtP6XFUbGGaOaeV89Ep+SjiXOx95RfEY4u3qcFwS6xeVNczWj5ywjuLJk+/U6Q8a5k5xe0V5FObAm73vcQr0IYTzN334OP3Qa+QJqtPISYPGtjHVyNEp0cui+uLHRh+5V7Ciaxk/7tLnPdRn+Q3BPcpOhWg8ppP7d5A3fF7edHoaaRKG3sRf1ZEhITuaHyvXQrSXOSFSgoibiDc17yr7wNM4sP3ZNV6pT7bXBHDmkaKS1ONWqiywcUb6qG/ZK26qGSuQA7pwsWu0FmZjgU3wNH4PpkuNlgU0HWIRBksKlZ5nK/+1jMGvds/Oz/J5Vevub+0KDrY3Yk60nCmdQToMJFkWLINimiqAd3jIr4oHYM8C6WlWWca8dl9bNCZ1Av6+OB4v+MllTcpu0h1F6tGDboIXg05LUISxsJVVpcZ6otx/69b29zU09BjQI0R1VNmiB83Zq/MMTZrr90A3W45t6256obv0400CUVKbcWglKAwSJa1+X7AFX+T8Tz6jDduV1X9Drt75lKkfMIaeSVtVSZFQ9U/O5ZuSl9fwP5fgsfXZ6o09i1nO2vmsGCb85tsby5Kx99AJoxXx7eQ6QsxI9eznu9YQdLfSemuS1G+Xi9enavGjMfKd1iT9H5pEAyK42djcYld6L2aA+TC4uVgVkkhxmgtfoxPG+Es4V6ctV9/itEdkXhHAaP03/4lIXnBY0Dm/M/AbYiNt1uJOpHMze36TZ47GPKCoO0quSLJdFZ3ozz8btQJkz/EAsbmbJxm79T3O7yPyzPTX5Y+OU7wt7J9+dbNLlCchudOmWLwW/DIpyX0odBFXVKj681TayiXgrxiL4MNYAWMNtr0oHHHhUwjc49nuLQ+IQBf0pTqgAgfNrlEg9RmjhndQQ3BN6Wys/BV6YeOCi0Hha1sfUpxTFhGu20oqwNjDeMQ/DmXFkJMgXnCMkNlXqtryq4h+4rofW08/g9DIKWSlCk0z0oN2ehkRa1WzVrHiCKMEaDUjVF1KvA4NzFLQ0zoLmy8oYDv3USMcwR/Cx4jckS9ZWnhzkNXxt9TzseB3Io8cUHJljWKt0GQAqFUOPFZTt2pVLzkm4M0YreDITlYFSUbH+paJmTk31p/ipMGXWtXCjgFYjelOT72v0EhVawln1gn4R6tRP/qvfTt7rMKONacsYUah7bf2b5ztMKSqxy9tASWk/bIHNYvdCJ9I1w1MassBRbArRgwrhYr/A7VKOVEP7NHGpQgEXTdTRZPB45YjUcJcuTi3feouvDDcqsVkcTDRfgRcTmTC8XTPnwR6ZMkpNzKjoSoo60425p84+mF2q9I7a2BF14uKYDuJxaiMhFhlQlSMhAzNIQGbNqzAGPfvVcwtRTD4XDCOOAbf1eT8OeBF68H4RyCAEyEv9nIH8Mb/nx+H2wYShwXoDNOUqzyDvSi5yJUvIYhQDNOXC3Slu/BV0H01eWM0QgU6pN67im7lnO/8e/kcR9/mI4rh16mq8tZN59Abgi3ex5I770z/zd4kj7gGfUy+kSHJn5EyB22x5O14fcecF8meVF1rouRZ+SmXLvfPoOXcuE2lPu/WMc5L2s3eIP6e+oMbQlCSMInrCP241CL+LiqGqKYk4b8sK04ijpH6kpwtUFCngSyOZ0B+Vs62YkgopTzmUjKarXHDCHzM9gj+68SaXAULjSAjeG2O30/LZMorSU+HK4wSHJ8JUQYcQ5bRWCtlNBe5Z1Kob+MLhVVYPuzxLHPFDqdqhHurXwzAgTBwpVoZek1NKMFCdL0W3PkR9uyypKjQVomrrJsGIjAb5tBn2RvkQR96fk864QMzhFe3wprfKSFP7uRnMDtqNgkLNdN5oQ5bPG5To/A58uIrd38UmOxHp4slJkRnnx1ClrFlmNEAFvFkfa9Ov3lGFmZi+InBkCVJJsQPWcLuRhFMrinWCjuBIx1khdYRwnbekNazuaxMDb1zDigVUQzVWXw9T8ZRwG9n0AEj0u5Zha75AuZkvD6MhtsJBGxNMsaBjgVGKapJddptWi0Hp8e6yWnVcJ1GoOjm3XC4sXnUsGdTPZ1hqrejhLEdqgCK6Csgczp+TTybdovijWJZYqK00CX60/mi6df1LWS91iDsXl9WLxvP5VeV2+i4FCFU3kZ3UtfS7nN4t0u57d1rADEn/hzxwi2bVJsvA2WLOviWXO4IAeey+18nLl6tNEX/wMPwVTX5x4FfFp9V/F6i/atXBtpQU6MJ4QJD+q0yjOrDhKEcCalqUbEcLls+MLl7mtflANPhUKm4yxYeSDKZB8fgwqHSp4AFf6vFgUnl51Qd6j50ngtRc4Kt04D+4IkiK+bTwvI+vlOJ6/U8ohmQrc6AAusTx4Mri0QD+QF8YRcCHFBAdWgJ2dQD4oCB8XmN4DJbDdtgC62AANsGnYodHd4o4QJexeFKkS/IA2lih/+aHLjaisvThvPu1NNbNSknq7Q3FlhozwIz4gbSSkHpzRSG5Y+2Bf+VDhy7O3wBW4fjpdssWgmkQlClxuR5qq7o4/9BzwHP4U8XUA7BZea29CWljo9rrqtTbb5UjqbE7UC5MNQRrDoZYf34Xojn51taVxoyiaEuvrrCy2B/blOJtZW2KSzfgOOMMk0AMvcDOU+Jnjg1U3l1sRTylNoiGbIh3lgL+Uv5PCyOkwoighgJgQzRwgC6VUvBK/SaN12AAG/igFSogeignS/8B92hxlvfVm+FNuAzulB+m4RnYEy7Bkp3tmjV32pe7DFc/6PnFL5bd+InRTSxkEU1Yn5kOq99xyFup0VsOoap7DuNSFTlcaMlzBHlBjkOUFzmSNPV3cxEcy70ggBEZn3PHy/AcRZyqnAcqaTlP6khzXvjxznmT+B1ro+spkKjkvSAfTj7kxGgXc20JHMtJyC3J+eKZk6OJDc75ETLnpJSicjJ8gTk5CU9QqPzTUeIDe2sTUq2VSVe87xZNahnU0b9guWbVVh9rUyQOqmNT1mhOLdG0fLRDNdh4PJ7gKVLC4yecdvLZDnlOYWE0HzIhaHdLYIvmORlFrUGj5+vJ1Mc5kS5aVivQCK/V2+425+K17ia26yRj0NlITl1b1Atl18HoDlozdTjPv0NDgVqeuqroPqRaB5eDDtE01fL5n7toCCOjlz9Pkd/LrIUrqtc0LPNJFgwG0UWEpjr7vQavvpaPlS4rEN0cuy4GRbUcHeI0O1EbNmJ1t0y01abzYHX77C6MSaOnW4OjY6/Xiw1uBm2j25Lmzitqs+SIFhkwy2h7vVjTg6sD9r31Bc4EgyYd7NbR/7GiaTtm77z2jU4uAlabmNoctHpBFxzSuNEZH7wauojZENfPGeA9wjbCWDtdvYWy7bz1jQRNkMZrm7UKWb932rzzpxftueFNRdu+8x8M1KM3BAxiDQeR2Mfdaezew9O+vj4bjDIk37/w22LhUnyArO2NweBe/tshlTDakZDepwTouuwIIHYE2PWzDL5c5MYVDHysDmHtra1x2hTOSELRBCjc3TgxnMCW6yox4NscjruxmQ2K+0XAwYfE/i+ATLLIJodc8singEKKKKaEUsoop4JKqqimhvZ0oCNmOtGZLnSlm8gcTDXZDNPNNCHd6aFKv5voKG56aq4FXHz0CQ6g+fE1V3tfik0vTUhv+tCXfvRnAAMZxGCGMJRhDGcEIxnFaC0Vb4nb7rvD7kHGfHZxJXs6eztTXu8uw3B8JUzCCF72MfFbB1/2JMVsnEyZJCbxZ5bBb5i/JN/fnT3LL++CyI1gnC1dqNmI+Vq5fLNz7vPlB9XjhG3puEzY9ty7yzvmP35PfST2REIyCfeMcMMICYluGLE9IyRGuMF0jcfhVChVVmeYGsvETI6TOqFOqlP5abuvsRLqXz//hqn88cbtQ/dLh49QquWQqTlmFmr6BLryx5cXpygEtyrBEabQw6FGj0I1ryV9HlxevlzenJ7NfT3TUAW1Qpk9zlLP8o4uKv3HD6qcwqa6ttDZYE3oI/+/Re8sTv/+ivn09lg3FXpUtR4rfda0V1Uw3YQ4jnFZtJmsjZlF/+qPaGIRvejzTfr89eVbWfpULqiiuSWe6htOhS2ya9Ci1CWBDIi0AziQa6Fmg0k+cC4om2QHIxHBT3aDckJDaw6ThOaRzDsKVPwBBTEkFpa6x7nqRsWZ+xIVwj43wjeXxDhgL25xARWxo6LYZ2x5+gVTsLoZ5RNRrQZU0D5xIWlEK4KBkzGWHG4jvLBFiSJLnKc4SnUo5ekiWkT6Q7OR0LCYERrWqQwqSoIeD+IGoQ6JxWpawE3MtBOIUZ/uC2uRMYMPtOkTicsT6Ebj8fvykNw0NWSSx4xSXhzvUF7U+ccFo8o2h53mhJQ+LRbfXx/gFPXxocq5JJym46bgxVP6dqh4m7Ubg9eXV5PUWE4yfwVGJmC6dVz9en9/nWb3rhfR6f2L9kA96zPjqdlkGjF34ocENT+QafbFYOPq2g9IDwYAAA==) format("woff2")}
+
+/* ============ Vercel / Geist-inspired design system ============ */
+:root{
+  --bg:#ffffff;
+  --surface:#ffffff;
+  --surface-2:#fafafa;
+  --surface-3:#f4f4f5;
+  --text:#171717;
+  --text-2:#4d4d4d;
+  --text-3:#666666;
+  --text-4:#8f8f8f;
+  --border:rgba(0,0,0,0.09);
+  --border-2:rgba(0,0,0,0.14);
+  --line:rgba(0,0,0,0.2);
+  --blue:#0a72ef; --blue-bg:#ebf5ff; --blue-text:#0060df;
+  --red:#e5484d; --red-bg:#fff0f0; --red-text:#c62368;
+  --amber:#d98a00; --amber-bg:#fff6e6; --amber-text:#8a5a00;
+  --green:#12924a; --green-bg:#eafaf0; --green-text:#0d7a3d;
+  --pink:#de1d8d;
+  --shadow-card:0 0 0 1px var(--border), 0 2px 2px rgba(0,0,0,0.03), 0 8px 16px -12px rgba(0,0,0,0.12);
+  --shadow-ring:0 0 0 1px var(--border);
+  --nav-bg:rgba(255,255,255,0.75);
+  --activation:rgba(23,23,23,0.12);
+  --msg-ring:rgba(10,114,239,0.22);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#000000;
+  --surface:#0a0a0a;
+  --surface-2:#111111;
+  --surface-3:#161616;
+  --text:#ededed;
+  --text-2:#a1a1a1;
+  --text-3:#8f8f8f;
+  --text-4:#707070;
+  --border:rgba(255,255,255,0.12);
+  --border-2:rgba(255,255,255,0.18);
+  --line:rgba(255,255,255,0.22);
+  --blue:#52a8ff; --blue-bg:rgba(10,114,239,0.14); --blue-text:#8ec5ff;
+  --red:#ff6166; --red-bg:rgba(229,72,77,0.14); --red-text:#ff8a9a;
+  --amber:#f5b544; --amber-bg:rgba(217,138,0,0.14); --amber-text:#f7c96b;
+  --green:#3fcf6e; --green-bg:rgba(18,146,74,0.15); --green-text:#67e493;
+  --pink:#ff5bb8;
+  --shadow-card:0 0 0 1px var(--border);
+  --shadow-ring:0 0 0 1px var(--border);
+  --nav-bg:rgba(0,0,0,0.7);
+  --activation:rgba(237,237,237,0.16);
+  --msg-ring:rgba(82,168,255,0.32);
+  color-scheme:dark;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000;--surface:#0a0a0a;--surface-2:#111111;--surface-3:#161616;
+    --text:#ededed;--text-2:#a1a1a1;--text-3:#8f8f8f;--text-4:#707070;
+    --border:rgba(255,255,255,0.12);--border-2:rgba(255,255,255,0.18);--line:rgba(255,255,255,0.22);
+    --blue:#52a8ff;--blue-bg:rgba(10,114,239,0.14);--blue-text:#8ec5ff;
+    --red:#ff6166;--red-bg:rgba(229,72,77,0.14);--red-text:#ff8a9a;
+    --amber:#f5b544;--amber-bg:rgba(217,138,0,0.14);--amber-text:#f7c96b;
+    --green:#3fcf6e;--green-bg:rgba(18,146,74,0.15);--green-text:#67e493;
+    --pink:#ff5bb8;--shadow-card:0 0 0 1px var(--border);--shadow-ring:0 0 0 1px var(--border);
+    --nav-bg:rgba(0,0,0,0.7);--activation:rgba(237,237,237,0.16);--msg-ring:rgba(82,168,255,0.32);color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Geist','SF Pro Display',-apple-system,system-ui,Segoe UI,sans-serif;
+  font-feature-settings:"liga","calt";
+  background:var(--bg);color:var(--text-2);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  transition:background .25s,color .25s;
+}
+.mono{font-family:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+h1,h2,h3,h4{color:var(--text);font-weight:600;letter-spacing:-0.03em;line-height:1.15}
+
+/* ===== Top bar ===== */
+.topbar{position:sticky;top:0;z-index:50;background:var(--nav-bg);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 1px 0 var(--border)}
+.topbar-in{max-width:1320px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:14px}
+.wordmark{display:flex;align-items:center;gap:10px}
+.wordmark .tri{width:26px;height:26px;flex-shrink:0}
+.wordmark .tri svg{width:26px;height:26px;display:block}
+.wordmark b{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.wordmark .mono{font-size:11px;color:var(--text-4);text-transform:uppercase;letter-spacing:0.08em}
+.topbar .spacer{margin-left:auto}
+.theme-btn{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:8px;background:var(--surface);box-shadow:var(--shadow-ring);color:var(--text-2);
+  cursor:pointer;transition:color .15s}
+.theme-btn:hover{color:var(--text)}
+.theme-btn svg{width:17px;height:17px}
+.theme-btn .ic-sun{display:none} .theme-btn .ic-moon{display:block}
+:root[data-theme="dark"] .theme-btn .ic-sun{display:block}
+:root[data-theme="dark"] .theme-btn .ic-moon{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme-btn .ic-sun{display:block}
+  :root:not([data-theme="light"]) .theme-btn .ic-moon{display:none}}
+
+.page{max-width:1320px;margin:0 auto;padding:36px 28px 100px}
+
+/* ===== Hero ===== */
+.hero{padding:44px 40px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow-card);
+  position:relative;overflow:hidden;margin-bottom:28px}
+.hero::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,var(--blue),var(--pink) 55%,var(--red))}
+.eyebrow{font-family:'Geist Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.12em;
+  color:var(--text-4);margin-bottom:16px;display:inline-block}
+.hero h1{font-size:clamp(30px,5vw,50px);letter-spacing:-0.045em;color:var(--text);margin-bottom:16px;line-height:1.02}
+.hero p{font-size:17px;color:var(--text-3);max-width:820px;line-height:1.55}
+.hero-stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:28px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border)}
+.hero-stat .v{font-size:24px;font-weight:600;color:var(--text);letter-spacing:-0.03em;font-feature-settings:"tnum"}
+.hero-stat .l{font-family:'Geist Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-4);margin-top:3px}
+
+/* ===== Section ===== */
+.section{margin-top:24px;padding:28px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow-card)}
+.section.flush{box-shadow:none;background:transparent;padding:28px 0 0}
+.section-header{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:24px}
+.section-header h2{font-size:clamp(22px,3vw,30px);letter-spacing:-0.035em;margin-bottom:8px}
+.section-header p{max-width:780px;color:var(--text-3);line-height:1.55;font-size:14.5px}
+.tag{font-family:'Geist Mono',monospace;white-space:nowrap;padding:6px 11px;border-radius:6px;
+  background:var(--surface-2);box-shadow:var(--shadow-ring);color:var(--text-3);
+  font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.06em}
+
+/* ===== Activity board (overall) ===== */
+.activity-board{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:26px 30px;align-items:stretch}
+.activity-node{position:relative;padding:16px;border-radius:10px;background:var(--surface);
+  box-shadow:var(--shadow-card);display:flex;flex-direction:column;min-height:132px}
+.activity-node .kick{font-family:'Geist Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:0.09em;font-weight:500;margin-bottom:9px;display:inline-flex;align-items:center;gap:6px}
+.activity-node .kick::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--text-4)}
+.activity-node strong{display:block;font-size:15px;color:var(--text);letter-spacing:-0.01em;margin-bottom:6px}
+.activity-node span{color:var(--text-3);font-size:13px;line-height:1.45}
+.activity-node.start .kick{color:var(--green-text)} .activity-node.start .kick::before{background:var(--green)}
+.activity-node.decision .kick{color:var(--amber-text)} .activity-node.decision .kick::before{background:var(--amber)}
+.activity-node.end .kick{color:var(--blue-text)} .activity-node.end .kick::before{background:var(--blue)}
+.activity-node:not(:last-child)::after{content:"";position:absolute;right:-30px;top:50%;width:30px;height:1px;
+  background:var(--line);z-index:1}
+.activity-node:not(:last-child)::before{content:"";position:absolute;right:-30px;top:calc(50% - 4px);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:7px solid var(--line);z-index:2}
+.activity-note-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.note-card{padding:16px 18px;border-radius:10px;background:var(--surface-2);box-shadow:var(--shadow-ring)}
+.note-card strong{display:block;margin-bottom:7px;color:var(--text);font-size:14px}
+.note-card.n-ok strong{color:var(--green-text)}
+.note-card.n-warn strong{color:var(--amber-text)}
+.note-card.n-crit strong{color:var(--red-text)}
+.note-card p{color:var(--text-3);line-height:1.5;font-size:13.5px}
+
+/* ===== Flow cards ===== */
+.flow-grid,.scenario-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.flow-card,.scenario-card{padding:22px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow-card)}
+.flow-card h3{font-size:19px;letter-spacing:-0.02em;margin-bottom:12px}
+.flow-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.flow-meta span{font-family:'Geist Mono',monospace;padding:4px 9px;border-radius:6px;background:var(--surface-2);
+  box-shadow:var(--shadow-ring);color:var(--text-3);font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em}
+.mini-activity{margin:0 0 18px;padding:16px;border-radius:10px;background:var(--surface-2);
+  box-shadow:var(--shadow-ring);overflow-x:auto}
+.mini-activity-title{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
+.mini-activity-title strong{font-family:'Geist Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);font-weight:500}
+.mini-activity-title span{color:var(--text-4);font-size:12px}
+.mini-flow{min-width:720px;display:grid;grid-template-columns:repeat(5,minmax(128px,1fr));gap:22px;align-items:stretch}
+.mini-node{position:relative;padding:12px;border-radius:9px;background:var(--surface);box-shadow:var(--shadow-card);display:flex;flex-direction:column}
+.mini-node .mk{font-family:'Geist Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--text-4);margin-bottom:7px}
+.mini-node strong{display:block;font-size:13px;color:var(--text);margin-bottom:5px;letter-spacing:-0.01em}
+.mini-node span{color:var(--text-3);display:block;font-size:11.5px;line-height:1.4}
+.mini-node.start .mk,.mini-node.end .mk{color:var(--green-text)}
+.mini-node.decision .mk{color:var(--amber-text)}
+.mini-node.action .mk{color:var(--blue-text)}
+.mini-node:not(:last-child)::after{content:"";position:absolute;right:-22px;top:50%;width:22px;height:1px;background:var(--line)}
+.mini-node:not(:last-child)::before{content:"";position:absolute;right:-22px;top:calc(50% - 4px);
+  border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid var(--line);z-index:2}
+.mini-branch{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.mini-branch b{font-family:'Geist Mono',monospace;padding:3px 7px;border-radius:5px;background:var(--surface-3);
+  box-shadow:var(--shadow-ring);color:var(--text-3);font-size:10px;font-weight:500;line-height:1.3}
+.flow-steps{display:grid;gap:8px;list-style:none;counter-reset:flow-step}
+.flow-steps li{counter-increment:flow-step;display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;
+  align-items:start;padding:11px 13px;border-radius:9px;background:var(--surface-2);box-shadow:var(--shadow-ring)}
+.flow-steps li::before{content:counter(flow-step,decimal-leading-zero);font-family:'Geist Mono',monospace;
+  display:grid;place-items:center;width:26px;height:22px;color:var(--text-4);font-size:11px;font-weight:500}
+.flow-steps strong{display:block;margin-bottom:2px;color:var(--text);font-size:13.5px;letter-spacing:-0.01em}
+.flow-steps span{color:var(--text-3);line-height:1.5;font-size:13px}
+.branch-box{margin-top:16px;padding:14px 16px;border-radius:9px;background:var(--amber-bg);
+  box-shadow:inset 3px 0 0 var(--amber),var(--shadow-ring)}
+.branch-box strong{display:block;margin-bottom:5px;color:var(--amber-text);font-size:12px;
+  font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.branch-box p{color:var(--text-2);line-height:1.5;font-size:13.5px}
+
+/* ===== Sequence diagrams (geometry preserved) ===== */
+.sequence-tabs{display:grid;gap:22px}
+.sequence-card{padding:22px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow-card);overflow-x:auto}
+.sequence-title{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:20px}
+.sequence-title h3{font-size:19px;letter-spacing:-0.02em}
+.sequence-title span{color:var(--text-3);font-size:13.5px}
+.sequence{min-width:900px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;position:relative;padding-bottom:8px}
+.lane{position:relative;min-height:560px;border-radius:10px;background:var(--surface-2);box-shadow:var(--shadow-ring);padding:14px 10px}
+.lane h4{padding:9px 8px;border-radius:7px;background:var(--text);color:var(--bg);text-align:center;
+  font-size:12px;font-weight:600;letter-spacing:-0.01em}
+.lifeline{position:absolute;top:60px;bottom:12px;left:50%;width:1px;transform:translateX(-50%);
+  background:repeating-linear-gradient(180deg,var(--line),var(--line) 6px,transparent 6px,transparent 13px)}
+.message{position:absolute;left:calc(var(--from) * 20% + 10%);right:calc((4 - var(--to)) * 20% + 10%);top:var(--y);height:28px;z-index:4}
+.message.reverse{left:calc(var(--to) * 20% + 10%);right:calc((4 - var(--from)) * 20% + 10%)}
+.message-line{position:absolute;left:0;right:0;top:13px;border-top:1.5px solid var(--blue)}
+.message-line::after{content:"";position:absolute;right:-1px;top:-5px;border-top:5px solid transparent;
+  border-bottom:5px solid transparent;border-left:8px solid var(--blue)}
+.message.reverse .message-line::after{right:auto;left:-1px;border-left:0;border-right:8px solid var(--blue)}
+.message-label{position:absolute;left:50%;top:-16px;transform:translateX(-50%);padding:4px 9px;border-radius:6px;
+  background:var(--blue-bg);color:var(--blue-text);box-shadow:0 0 0 1px var(--msg-ring);
+  white-space:nowrap;font-size:11.5px;font-weight:500;font-family:'Geist Mono',monospace;letter-spacing:-0.01em}
+.activation{position:absolute;left:50%;top:var(--top);height:var(--height);width:12px;border-radius:4px;
+  background:var(--activation);box-shadow:var(--shadow-ring);transform:translateX(-50%);z-index:2}
+
+/* ===== Step details table ===== */
+.matrix-wrap{overflow-x:auto;border-radius:12px;box-shadow:var(--shadow-card);background:var(--surface)}
+.matrix{width:100%;border-collapse:collapse;min-width:760px}
+.matrix th,.matrix td{padding:13px 16px;text-align:left;vertical-align:top;line-height:1.5;box-shadow:inset 0 -1px 0 var(--border)}
+.matrix th{background:var(--surface-2);color:var(--text-3);font-family:'Geist Mono',monospace;font-size:11px;
+  font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
+.matrix td{color:var(--text-3);font-size:13.5px}
+.matrix td:first-child{color:var(--text);font-weight:500}
+.matrix tr:last-child td{box-shadow:none}
+
+/* ===== Scenario cards ===== */
+.scenario-card{display:grid;gap:12px}
+.scenario-card h3{font-size:18px;letter-spacing:-0.02em;margin-top:8px}
+.scenario-pill{font-family:'Geist Mono',monospace;justify-self:start;padding:4px 9px;border-radius:6px;
+  background:var(--surface-2);box-shadow:var(--shadow-ring);color:var(--text-3);font-size:10.5px;
+  text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.scenario-block{padding:13px 15px;border-radius:9px;background:var(--surface-2);box-shadow:var(--shadow-ring)}
+.scenario-block strong{display:block;margin-bottom:4px;color:var(--text);font-size:12px;
+  font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.05em;font-weight:500}
+.scenario-block p{color:var(--text-3);line-height:1.5;font-size:13.5px}
+.scenario-block.warning{background:var(--amber-bg);box-shadow:inset 3px 0 0 var(--amber),var(--shadow-ring)}
+.scenario-block.warning strong{color:var(--amber-text)}
+.scenario-block.danger{background:var(--red-bg);box-shadow:inset 3px 0 0 var(--red),var(--shadow-ring)}
+.scenario-block.danger strong{color:var(--red-text)}
+
+/* ===== Legend ===== */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.legend span{font-family:'Geist Mono',monospace;display:inline-flex;align-items:center;gap:8px;padding:7px 12px;
+  border-radius:7px;background:var(--surface-2);box-shadow:var(--shadow-ring);color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+.foot{margin-top:44px;padding-top:22px;box-shadow:inset 0 1px 0 var(--border);text-align:center;
+  color:var(--text-4);font-size:12.5px}
+.foot .mono{color:var(--text-3)}
+
+/* ===== Responsive ===== */
+@media(max-width:1180px){
+  .activity-board{grid-template-columns:repeat(3,minmax(160px,1fr))}
+  .activity-node:nth-child(3n)::after,.activity-node:nth-child(3n)::before{display:none}
+}
+@media(max-width:900px){
+  .flow-grid,.scenario-grid{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  .page{padding:24px 16px 80px}
+  .hero{padding:30px 22px}
+  .section{padding:20px}
+  .section-header,.sequence-title,.mini-activity-title{flex-direction:column;align-items:flex-start}
+  .activity-board,.activity-note-grid{grid-template-columns:1fr}
+  .activity-node:not(:last-child)::after,.activity-node:not(:last-child)::before{display:none}
+}
+</style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
-      <p class="eyebrow">Requirements companion document</p>
-      <h1>Activity and Sequence Diagrams</h1>
-      <p>
-        These diagrams describe the main operational behavior of the Smart Factory AI Dashboard.
-        They are designed to support implementation planning for the React frontend and C# ASP.NET Core backend.
-      </p>
-    </section>
 
-    <section class="section">
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="wordmark">
+      <span class="tri"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 22 20H2L12 3Z" fill="currentColor" style="color:var(--text)"/></svg></span>
+      <b>Smart Factory AI</b>
+      <span class="mono">/ flows</span>
+    </div>
+    <span class="spacer"></span>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<main class="page">
+
+  <section class="hero">
+    <span class="eyebrow">Requirements companion document</span>
+    <h1>Activity &amp; Sequence Diagrams</h1>
+    <p>These diagrams describe the main operational behavior of the Smart Factory AI Dashboard. They are designed to support implementation planning for the React frontend and C# ASP.NET Core backend.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="v">6</div><div class="l">Activity flows</div></div>
+      <div class="hero-stat"><div class="v">3</div><div class="l">Sequence diagrams</div></div>
+      <div class="hero-stat"><div class="v">6</div><div class="l">Step-detail rows</div></div>
+      <div class="hero-stat"><div class="v">6</div><div class="l">Demo scenarios</div></div>
+    </div>
+  </section>
+
+  <!-- Overall activity -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>Overall Activity Diagram</h2>
+        <p>This activity diagram shows the main user journey from login to dashboard monitoring, AI analysis, operational action, and reporting update.</p>
+      </div>
+      <span class="tag">Global flow</span>
+    </div>
+    <div class="activity-board">
+      <article class="activity-node start"><span class="kick">Start</span><strong>1. User opens app</strong><span>User accesses the Smart Factory AI Dashboard through the browser.</span></article>
+      <article class="activity-node decision"><span class="kick">Check</span><strong>2. Login and role check</strong><span>System verifies account and loads role-based permissions.</span></article>
+      <article class="activity-node"><span class="kick">Process</span><strong>3. Load dashboard</strong><span>KPIs, production status, warehouse signals, workforce data, and alerts are displayed.</span></article>
+      <article class="activity-node decision"><span class="kick">Decision</span><strong>4. Detect issue?</strong><span>System checks whether any module has warning or critical status.</span></article>
+      <article class="activity-node"><span class="kick">AI</span><strong>5. AI recommendation</strong><span>System creates suggestions for safety, productivity, warehouse, or staffing decisions.</span></article>
+      <article class="activity-node end"><span class="kick">Result</span><strong>6. User action and record</strong><span>User resolves, approves, rejects, escalates, or exports. The result is saved for reporting.</span></article>
+    </div>
+    <div class="activity-note-grid">
+      <article class="note-card n-ok"><strong>Normal path</strong><p>If no critical issue exists, the user continues monitoring and reviewing dashboard metrics.</p></article>
+      <article class="note-card n-warn"><strong>Warning path</strong><p>If a warning appears, the user opens the related module and decides whether action is needed.</p></article>
+      <article class="note-card n-crit"><strong>Critical path</strong><p>If a critical alert appears, the system highlights it on the dashboard and routes it to the responsible role.</p></article>
+    </div>
+  </section>
+
+  <!-- Detailed activity flows -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>Detailed Activity Flows</h2>
+        <p>Each flow below describes what the user does, what the system checks, what data changes, and what alternate paths should be handled during implementation.</p>
+      </div>
+      <span class="tag">Per module flow</span>
+    </div>
+    <div class="flow-grid">
+
+      <article class="flow-card">
+        <h3>Dashboard Monitoring Flow</h3>
+        <div class="flow-meta"><span>Actor · Factory Manager</span><span>Module · Dashboard</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Monitor, branch by severity, then route to action.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Open dashboard</strong><span>Role-based widgets load.</span></div>
+            <div class="mini-node"><span class="mk">Read</span><strong>Read KPIs</strong><span>Output, safety, warehouse, workforce.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Issue found?</strong><span>System ranks normal, warning, critical.</span><div class="mini-branch"><b>No → monitor</b><b>Yes → drill down</b></div></div>
+            <div class="mini-node action"><span class="mk">Action</span><strong>Open detail</strong><span>User opens related module entity.</span></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Save result</strong><span>Action updates dashboard summary.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Login and role load</strong><span>System identifies the user role and displays widgets allowed for that role.</span></div></li>
+          <li><div><strong>Load factory KPIs</strong><span>Daily output, target completion, active lines, alerts, warehouse occupancy, and workforce coverage are loaded.</span></div></li>
+          <li><div><strong>Prioritize alerts</strong><span>Critical safety and production alerts are placed above normal information.</span></div></li>
+          <li><div><strong>User selects issue</strong><span>User clicks a KPI, alert, production line, warehouse signal, pending form, or AI suggestion.</span></div></li>
+          <li><div><strong>Redirect to detail</strong><span>System opens the related module page and passes the selected entity id.</span></div></li>
+          <li><div><strong>Record action</strong><span>Any resolve, approve, reject, or escalate action updates the dashboard summary.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If data fails to load, the dashboard shows an error state and offers retry. If no alerts exist, the dashboard shows a normal operating state.</p></div>
+      </article>
+
+      <article class="flow-card">
+        <h3>Warehouse Item Tracking Flow</h3>
+        <div class="flow-meta"><span>Actor · Warehouse Manager</span><span>Module · Warehouse</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Search item, validate zone, and record warehouse action.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Open warehouse</strong><span>Load zones, capacity, item status.</span></div>
+            <div class="mini-node"><span class="mk">Search</span><strong>Search item</strong><span>By item code or batch.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Item found?</strong><span>System checks item and movement history.</span><div class="mini-branch"><b>No → check forms</b><b>Yes → show location</b></div></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Correct zone?</strong><span>Compare actual zone with rule.</span><div class="mini-branch"><b>No → move</b><b>Yes → close</b></div></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Update movement</strong><span>Save location, quantity, and note.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Open warehouse page</strong><span>System displays occupancy, low stock warnings, misplaced items, and zone status.</span></div></li>
+          <li><div><strong>Search item</strong><span>User enters item code, batch code, or item name into search.</span></div></li>
+          <li><div><strong>Match warehouse records</strong><span>System searches item records and movement history.</span></div></li>
+          <li><div><strong>Display location</strong><span>System shows zone, shelf, quantity, last movement, and current status.</span></div></li>
+          <li><div><strong>Check placement rule</strong><span>System compares actual zone with recommended zone.</span></div></li>
+          <li><div><strong>Resolve issue</strong><span>User confirms movement, accepts AI storage suggestion, or marks alert as false.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If item is not found, system suggests checking import/export forms. If warehouse capacity is above 90%, system blocks new storage suggestion in that zone.</p></div>
+      </article>
+
+      <article class="flow-card">
+        <h3>Production Line Issue Flow</h3>
+        <div class="flow-meta"><span>Actor · Production Manager</span><span>Module · Production</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Detect line issue, classify root cause, and apply action.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Open production</strong><span>Load line output and machine state.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Below target?</strong><span>Check efficiency, defects, downtime.</span><div class="mini-branch"><b>No → monitor</b><b>Yes → analyze</b></div></div>
+            <div class="mini-node"><span class="mk">Analyze</span><strong>Analyze cause</strong><span>Staffing, material, machine, quality.</span></div>
+            <div class="mini-node action"><span class="mk">Action</span><strong>Choose action</strong><span>Maintenance, transfer, overtime, adjust target.</span></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Update line</strong><span>Record issue and refresh KPIs.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Open production overview</strong><span>System lists all lines with output, target, efficiency, defect rate, and machine status.</span></div></li>
+          <li><div><strong>Detect low efficiency</strong><span>If efficiency is below 85%, the line is marked warning.</span></div></li>
+          <li><div><strong>Open line detail</strong><span>User reviews downtime, machine status, assigned workers, and defect trend.</span></div></li>
+          <li><div><strong>AI checks causes</strong><span>System checks staffing shortage, material shortage, downtime, and defect rate.</span></div></li>
+          <li><div><strong>Recommended action</strong><span>System suggests maintenance request, worker transfer, overtime, or target adjustment.</span></div></li>
+          <li><div><strong>Manager decides</strong><span>User applies recommendation, creates machine issue report, or keeps monitoring.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If line is stopped, system bypasses low-efficiency recommendation and creates a machine downtime incident immediately.</p></div>
+      </article>
+
+      <article class="flow-card">
+        <h3>Safety Alert Handling Flow</h3>
+        <div class="flow-meta"><span>Actor · Safety Officer</span><span>Module · Safety + AI Cameras</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Classify camera event, notify owner, and close incident loop.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Detect event</strong><span>Camera sends location and confidence.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>High risk?</strong><span>Check area risk and event type.</span><div class="mini-branch"><b>Low → review</b><b>High → alert</b></div></div>
+            <div class="mini-node"><span class="mk">Create</span><strong>Create alert</strong><span>Save evidence and notify officer.</span></div>
+            <div class="mini-node action"><span class="mk">Action</span><strong>Respond</strong><span>Resolve, escalate, dispatch, or false alert.</span></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Update report</strong><span>Incident history and risk stats refresh.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Camera event detected</strong><span>System receives event type, camera location, timestamp, and confidence score.</span></div></li>
+          <li><div><strong>Severity classification</strong><span>Restricted-zone entry becomes high or critical depending on area risk level.</span></div></li>
+          <li><div><strong>Create alert</strong><span>System saves alert and sends notification to Safety Officer and Factory Manager if critical.</span></div></li>
+          <li><div><strong>Review evidence</strong><span>User opens snapshot/log, checks zone, and reads suggested response.</span></div></li>
+          <li><div><strong>Take action</strong><span>User warns worker, dispatches staff, escalates, resolves, or marks false alert.</span></div></li>
+          <li><div><strong>Update safety report</strong><span>System updates incident history and high-risk area statistics.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If confidence score is low, alert status starts as needs review. If repeated events happen in the same area, system raises the risk level.</p></div>
+      </article>
+
+      <article class="flow-card">
+        <h3>Workforce Planning Flow</h3>
+        <div class="flow-meta"><span>Actor · Factory Manager</span><span>Module · Workforce</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Plan staff, validate feasibility, then publish the shift plan.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Enter inputs</strong><span>Date, target, workers, absences.</span></div>
+            <div class="mini-node"><span class="mk">Load</span><strong>Load data</strong><span>Skills, line history, availability.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Enough workers?</strong><span>AI checks coverage against target.</span><div class="mini-branch"><b>No → overtime</b><b>Yes → assign</b></div></div>
+            <div class="mini-node action"><span class="mk">Action</span><strong>Adjust plan</strong><span>Accept, modify, reject, regenerate.</span></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Publish schedule</strong><span>Save assignments and notify staff.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Enter planning inputs</strong><span>User selects date, target output, available employees, holidays, and absences.</span></div></li>
+          <li><div><strong>Load historical data</strong><span>System loads previous performance by employee, line, and shift.</span></div></li>
+          <li><div><strong>Generate recommendation</strong><span>AI planner suggests workers per line, shift allocation, and overtime needs.</span></div></li>
+          <li><div><strong>Review risk notes</strong><span>System explains staffing gaps, expected output recovery, and overloaded lines.</span></div></li>
+          <li><div><strong>Manager adjusts plan</strong><span>User accepts, modifies employee assignment, or rejects and regenerates.</span></div></li>
+          <li><div><strong>Publish schedule</strong><span>System saves plan and sends notifications to affected employees.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If available employees are not enough, system recommends overtime or target adjustment instead of silently creating an impossible plan.</p></div>
+      </article>
+
+      <article class="flow-card">
+        <h3>Form Approval Flow</h3>
+        <div class="flow-meta"><span>Actor · Employee + Manager</span><span>Module · Forms</span><span>Priority · MVP</span></div>
+        <div class="mini-activity">
+          <div class="mini-activity-title"><strong>Activity diagram</strong><span>Submit request, route approval, and apply the operational result.</span></div>
+          <div class="mini-flow">
+            <div class="mini-node start"><span class="mk">Start</span><strong>Create form</strong><span>Leave, overtime, issue, import/export.</span></div>
+            <div class="mini-node"><span class="mk">Validate</span><strong>Validate data</strong><span>Required fields and impact checks.</span></div>
+            <div class="mini-node decision"><span class="mk">Decision</span><strong>Approve?</strong><span>Manager approves, rejects, or asks info.</span><div class="mini-branch"><b>No → return reason</b><b>Yes → apply</b></div></div>
+            <div class="mini-node action"><span class="mk">Action</span><strong>Apply result</strong><span>Shift, warehouse, issue, notification.</span></div>
+            <div class="mini-node end"><span class="mk">End</span><strong>Notify users</strong><span>Requester and stakeholders updated.</span></div>
+          </div>
+        </div>
+        <ol class="flow-steps">
+          <li><div><strong>Create form</strong><span>Employee selects leave, overtime, machine issue, warehouse import, or warehouse export form.</span></div></li>
+          <li><div><strong>Prefill data</strong><span>System fills user, department, line, shift, and date where possible.</span></div></li>
+          <li><div><strong>Validate request</strong><span>System checks required fields and module-specific impact.</span></div></li>
+          <li><div><strong>Submit for approval</strong><span>Form becomes pending and approver receives notification.</span></div></li>
+          <li><div><strong>Manager decision</strong><span>Approver approves, rejects with reason, or requests more information.</span></div></li>
+          <li><div><strong>Apply result</strong><span>System updates schedule, warehouse movement, machine issue, or notification status.</span></div></li>
+        </ol>
+        <div class="branch-box"><strong>Alternate path</strong><p>If the form affects staffing coverage, system warns the approver before approval. If rejected, requester must receive a reason.</p></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Sequence diagrams -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>Sequence Diagrams</h2>
+        <p>These sequence diagrams show how users, frontend pages, backend APIs, data storage, and AI logic communicate in important flows.</p>
+      </div>
+      <span class="tag">System interaction</span>
+    </div>
+
+    <div class="sequence-tabs">
+      <article class="sequence-card">
+        <div class="sequence-title"><div><h3>Safety Alert Sequence</h3><span>AI camera detects restricted-zone entry and routes it to the safety officer.</span></div></div>
+        <div class="sequence">
+          <div class="lane"><h4>AI Camera</h4><div class="lifeline"></div><div class="activation" style="--top: 84px; --height: 100px;"></div></div>
+          <div class="lane"><h4>Frontend</h4><div class="lifeline"></div><div class="activation" style="--top: 166px; --height: 260px;"></div></div>
+          <div class="lane"><h4>Safety API</h4><div class="lifeline"></div><div class="activation" style="--top: 112px; --height: 340px;"></div></div>
+          <div class="lane"><h4>AI Service</h4><div class="lifeline"></div><div class="activation" style="--top: 138px; --height: 110px;"></div></div>
+          <div class="lane"><h4>Database</h4><div class="lifeline"></div><div class="activation" style="--top: 268px; --height: 160px;"></div></div>
+          <div class="message" style="--from: 0; --to: 2; --y: 96px;"><div class="message-line"></div><div class="message-label">Detected restricted zone entry</div></div>
+          <div class="message" style="--from: 2; --to: 3; --y: 138px;"><div class="message-line"></div><div class="message-label">Classify severity</div></div>
+          <div class="message reverse" style="--from: 3; --to: 2; --y: 184px;"><div class="message-line"></div><div class="message-label">Return high/critical result</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 262px;"><div class="message-line"></div><div class="message-label">Save safety alert</div></div>
+          <div class="message" style="--from: 2; --to: 1; --y: 322px;"><div class="message-line"></div><div class="message-label">Push dashboard notification</div></div>
+          <div class="message" style="--from: 1; --to: 2; --y: 392px;"><div class="message-line"></div><div class="message-label">Resolve, escalate, or mark false</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 438px;"><div class="message-line"></div><div class="message-label">Update incident status</div></div>
+        </div>
+      </article>
+
+      <article class="sequence-card">
+        <div class="sequence-title"><div><h3>Workforce AI Recommendation Sequence</h3><span>Manager generates a shift plan based on targets, availability, and past performance.</span></div></div>
+        <div class="sequence">
+          <div class="lane"><h4>Factory Manager</h4><div class="lifeline"></div><div class="activation" style="--top: 84px; --height: 330px;"></div></div>
+          <div class="lane"><h4>Frontend</h4><div class="lifeline"></div><div class="activation" style="--top: 108px; --height: 390px;"></div></div>
+          <div class="lane"><h4>Workforce API</h4><div class="lifeline"></div><div class="activation" style="--top: 142px; --height: 330px;"></div></div>
+          <div class="lane"><h4>AI Planner</h4><div class="lifeline"></div><div class="activation" style="--top: 216px; --height: 120px;"></div></div>
+          <div class="lane"><h4>Database</h4><div class="lifeline"></div><div class="activation" style="--top: 162px; --height: 310px;"></div></div>
+          <div class="message" style="--from: 0; --to: 1; --y: 94px;"><div class="message-line"></div><div class="message-label">Enter target and planning date</div></div>
+          <div class="message" style="--from: 1; --to: 2; --y: 142px;"><div class="message-line"></div><div class="message-label">Request shift recommendation</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 184px;"><div class="message-line"></div><div class="message-label">Load employees, skills, absences</div></div>
+          <div class="message" style="--from: 2; --to: 3; --y: 226px;"><div class="message-line"></div><div class="message-label">Generate optimized plan</div></div>
+          <div class="message reverse" style="--from: 3; --to: 2; --y: 306px;"><div class="message-line"></div><div class="message-label">Return recommendation</div></div>
+          <div class="message reverse" style="--from: 2; --to: 1; --y: 356px;"><div class="message-line"></div><div class="message-label">Display plan and risk notes</div></div>
+          <div class="message" style="--from: 0; --to: 1; --y: 408px;"><div class="message-line"></div><div class="message-label">Approve or modify plan</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 464px;"><div class="message-line"></div><div class="message-label">Save final shift plan</div></div>
+        </div>
+      </article>
+
+      <article class="sequence-card">
+        <div class="sequence-title"><div><h3>Form Approval Sequence</h3><span>Employee submits a form and manager approves or rejects the request.</span></div></div>
+        <div class="sequence">
+          <div class="lane"><h4>Employee</h4><div class="lifeline"></div><div class="activation" style="--top: 86px; --height: 260px;"></div></div>
+          <div class="lane"><h4>Frontend</h4><div class="lifeline"></div><div class="activation" style="--top: 116px; --height: 350px;"></div></div>
+          <div class="lane"><h4>Forms API</h4><div class="lifeline"></div><div class="activation" style="--top: 154px; --height: 320px;"></div></div>
+          <div class="lane"><h4>Manager</h4><div class="lifeline"></div><div class="activation" style="--top: 312px; --height: 124px;"></div></div>
+          <div class="lane"><h4>Database</h4><div class="lifeline"></div><div class="activation" style="--top: 178px; --height: 304px;"></div></div>
+          <div class="message" style="--from: 0; --to: 1; --y: 98px;"><div class="message-line"></div><div class="message-label">Open form and enter data</div></div>
+          <div class="message" style="--from: 1; --to: 2; --y: 148px;"><div class="message-line"></div><div class="message-label">Submit request</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 194px;"><div class="message-line"></div><div class="message-label">Save pending form</div></div>
+          <div class="message" style="--from: 2; --to: 3; --y: 276px;"><div class="message-line"></div><div class="message-label">Notify approver</div></div>
+          <div class="message" style="--from: 3; --to: 2; --y: 334px;"><div class="message-line"></div><div class="message-label">Approve or reject</div></div>
+          <div class="message" style="--from: 2; --to: 4; --y: 394px;"><div class="message-line"></div><div class="message-label">Update form status</div></div>
+          <div class="message reverse" style="--from: 2; --to: 1; --y: 452px;"><div class="message-line"></div><div class="message-label">Show result notification</div></div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Step details -->
+    <section class="section flush">
       <div class="section-header">
         <div>
-          <h2>Overall Activity Diagram</h2>
-          <p>
-            This activity diagram shows the main user journey from login to dashboard monitoring,
-            AI analysis, operational action, and reporting update.
-          </p>
+          <h2>Sequence Step Details</h2>
+          <p>This table translates the visual sequence diagrams into implementation-level steps, including trigger, endpoint or action, updated data, and expected UI feedback.</p>
         </div>
-        <span class="tag">Global flow</span>
+        <span class="tag">Implementation detail</span>
       </div>
-
-      <div class="activity-board">
-        <article class="activity-node start">
-          <strong>1. User opens app</strong>
-          <span>User accesses the Smart Factory AI Dashboard through the browser.</span>
-        </article>
-        <article class="activity-node decision">
-          <strong>2. Login and role check</strong>
-          <span>System verifies account and loads role-based permissions.</span>
-        </article>
-        <article class="activity-node">
-          <strong>3. Load dashboard</strong>
-          <span>KPIs, production status, warehouse signals, workforce data, and alerts are displayed.</span>
-        </article>
-        <article class="activity-node decision">
-          <strong>4. Detect issue?</strong>
-          <span>System checks whether any module has warning or critical status.</span>
-        </article>
-        <article class="activity-node">
-          <strong>5. AI recommendation</strong>
-          <span>System creates suggestions for safety, productivity, warehouse, or staffing decisions.</span>
-        </article>
-        <article class="activity-node end">
-          <strong>6. User action and record</strong>
-          <span>User resolves, approves, rejects, escalates, or exports. The result is saved for reporting.</span>
-        </article>
-      </div>
-
-      <div class="activity-note-grid">
-        <article class="note-card">
-          <strong>Normal path</strong>
-          <p>If no critical issue exists, the user continues monitoring and reviewing dashboard metrics.</p>
-        </article>
-        <article class="note-card">
-          <strong>Warning path</strong>
-          <p>If a warning appears, the user opens the related module and decides whether action is needed.</p>
-        </article>
-        <article class="note-card">
-          <strong>Critical path</strong>
-          <p>If a critical alert appears, the system highlights it on the dashboard and routes it to the responsible role.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-header">
-        <div>
-          <h2>Detailed Activity Flows</h2>
-          <p>
-            Each flow below describes what the user does, what the system checks, what data changes,
-            and what alternate paths should be handled during implementation.
-          </p>
-        </div>
-        <span class="tag">Per module flow</span>
-      </div>
-
-      <div class="flow-grid">
-        <article class="flow-card">
-          <h3>Dashboard Monitoring Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Factory Manager</span>
-            <span>Module: Dashboard</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Monitor, branch by severity, then route to action.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Open dashboard</strong><span>Role-based widgets load.</span></div>
-              <div class="mini-node"><strong>Read KPIs</strong><span>Output, safety, warehouse, workforce.</span></div>
-              <div class="mini-node decision"><strong>Issue found?</strong><span>System ranks normal, warning, critical.</span><div class="mini-branch"><b>No: monitor</b><b>Yes: drill down</b></div></div>
-              <div class="mini-node action"><strong>Open detail</strong><span>User opens related module entity.</span></div>
-              <div class="mini-node end"><strong>Save result</strong><span>Action updates dashboard summary.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Login and role load</strong><span>System identifies the user role and displays widgets allowed for that role.</span></div></li>
-            <li><div><strong>Load factory KPIs</strong><span>Daily output, target completion, active lines, alerts, warehouse occupancy, and workforce coverage are loaded.</span></div></li>
-            <li><div><strong>Prioritize alerts</strong><span>Critical safety and production alerts are placed above normal information.</span></div></li>
-            <li><div><strong>User selects issue</strong><span>User clicks a KPI, alert, production line, warehouse signal, pending form, or AI suggestion.</span></div></li>
-            <li><div><strong>Redirect to detail</strong><span>System opens the related module page and passes the selected entity id.</span></div></li>
-            <li><div><strong>Record action</strong><span>Any resolve, approve, reject, or escalate action updates the dashboard summary.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If data fails to load, the dashboard shows an error state and offers retry. If no alerts exist, the dashboard shows a normal operating state.</p>
-          </div>
-        </article>
-
-        <article class="flow-card">
-          <h3>Warehouse Item Tracking Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Warehouse Manager</span>
-            <span>Module: Warehouse</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Search item, validate zone, and record warehouse action.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Open warehouse</strong><span>Load zones, capacity, item status.</span></div>
-              <div class="mini-node"><strong>Search item</strong><span>By IO, BU, item code, batch.</span></div>
-              <div class="mini-node decision"><strong>Item found?</strong><span>System checks item and movement history.</span><div class="mini-branch"><b>No: check forms</b><b>Yes: show location</b></div></div>
-              <div class="mini-node decision"><strong>Correct zone?</strong><span>Compare actual zone with rule.</span><div class="mini-branch"><b>No: move</b><b>Yes: close</b></div></div>
-              <div class="mini-node end"><strong>Update movement</strong><span>Save location, quantity, and note.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Open warehouse page</strong><span>System displays occupancy, low stock warnings, misplaced items, and zone status.</span></div></li>
-            <li><div><strong>Search item</strong><span>User enters item code, batch code, or item name into search.</span></div></li>
-            <li><div><strong>Match warehouse records</strong><span>System searches item records and movement history.</span></div></li>
-            <li><div><strong>Display location</strong><span>System shows zone, shelf, quantity, last movement, and current status.</span></div></li>
-            <li><div><strong>Check placement rule</strong><span>System compares actual zone with recommended zone.</span></div></li>
-            <li><div><strong>Resolve issue</strong><span>User confirms movement, accepts AI storage suggestion, or marks alert as false.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If item is not found, system suggests checking import/export forms. If warehouse capacity is above 90%, system blocks new storage suggestion in that zone.</p>
-          </div>
-        </article>
-
-        <article class="flow-card">
-          <h3>Production Line Issue Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Production Manager</span>
-            <span>Module: Production</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Detect line issue, classify root cause, and apply action.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Open production</strong><span>Load line output and machine state.</span></div>
-              <div class="mini-node decision"><strong>Below target?</strong><span>Check efficiency, defects, downtime.</span><div class="mini-branch"><b>No: monitor</b><b>Yes: analyze</b></div></div>
-              <div class="mini-node"><strong>Analyze cause</strong><span>Staffing, material, machine, quality.</span></div>
-              <div class="mini-node action"><strong>Choose action</strong><span>Maintenance, transfer, overtime, adjust target.</span></div>
-              <div class="mini-node end"><strong>Update line</strong><span>Record issue and refresh KPIs.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Open production overview</strong><span>System lists all lines with output, target, efficiency, defect rate, and machine status.</span></div></li>
-            <li><div><strong>Detect low efficiency</strong><span>If efficiency is below 85%, the line is marked warning.</span></div></li>
-            <li><div><strong>Open line detail</strong><span>User reviews downtime, machine status, assigned workers, and defect trend.</span></div></li>
-            <li><div><strong>AI checks causes</strong><span>System checks staffing shortage, material shortage, downtime, and defect rate.</span></div></li>
-            <li><div><strong>Recommended action</strong><span>System suggests maintenance request, worker transfer, overtime, or target adjustment.</span></div></li>
-            <li><div><strong>Manager decides</strong><span>User applies recommendation, creates machine issue report, or keeps monitoring.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If line is stopped, system bypasses low-efficiency recommendation and creates a machine downtime incident immediately.</p>
-          </div>
-        </article>
-
-        <article class="flow-card">
-          <h3>Safety Alert Handling Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Safety Officer</span>
-            <span>Module: Safety + AI Cameras</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Classify camera event, notify owner, and close incident loop.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Detect event</strong><span>Camera sends location and confidence.</span></div>
-              <div class="mini-node decision"><strong>High risk?</strong><span>Check area risk and event type.</span><div class="mini-branch"><b>Low: review</b><b>High: alert</b></div></div>
-              <div class="mini-node"><strong>Create alert</strong><span>Save evidence and notify officer.</span></div>
-              <div class="mini-node action"><strong>Respond</strong><span>Resolve, escalate, dispatch, or false alert.</span></div>
-              <div class="mini-node end"><strong>Update report</strong><span>Incident history and risk stats refresh.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Camera event detected</strong><span>System receives event type, camera location, timestamp, and confidence score.</span></div></li>
-            <li><div><strong>Severity classification</strong><span>Restricted-zone entry becomes high or critical depending on area risk level.</span></div></li>
-            <li><div><strong>Create alert</strong><span>System saves alert and sends notification to Safety Officer and Factory Manager if critical.</span></div></li>
-            <li><div><strong>Review evidence</strong><span>User opens snapshot/log, checks zone, and reads suggested response.</span></div></li>
-            <li><div><strong>Take action</strong><span>User warns worker, dispatches staff, escalates, resolves, or marks false alert.</span></div></li>
-            <li><div><strong>Update safety report</strong><span>System updates incident history and high-risk area statistics.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If confidence score is low, alert status starts as needs review. If repeated events happen in the same area, system raises the risk level.</p>
-          </div>
-        </article>
-
-        <article class="flow-card">
-          <h3>Workforce Planning Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Factory Manager</span>
-            <span>Module: Workforce</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Plan staff, validate feasibility, then publish the shift plan.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Enter inputs</strong><span>Date, target, workers, absences.</span></div>
-              <div class="mini-node"><strong>Load data</strong><span>Skills, line history, availability.</span></div>
-              <div class="mini-node decision"><strong>Enough workers?</strong><span>AI checks coverage against target.</span><div class="mini-branch"><b>No: overtime</b><b>Yes: assign</b></div></div>
-              <div class="mini-node action"><strong>Adjust plan</strong><span>Accept, modify, reject, regenerate.</span></div>
-              <div class="mini-node end"><strong>Publish schedule</strong><span>Save assignments and notify staff.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Enter planning inputs</strong><span>User selects date, target output, available employees, holidays, and absences.</span></div></li>
-            <li><div><strong>Load historical data</strong><span>System loads previous performance by employee, line, and shift.</span></div></li>
-            <li><div><strong>Generate recommendation</strong><span>AI planner suggests workers per line, shift allocation, and overtime needs.</span></div></li>
-            <li><div><strong>Review risk notes</strong><span>System explains staffing gaps, expected output recovery, and overloaded lines.</span></div></li>
-            <li><div><strong>Manager adjusts plan</strong><span>User accepts, modifies employee assignment, or rejects and regenerates.</span></div></li>
-            <li><div><strong>Publish schedule</strong><span>System saves plan and sends notifications to affected employees.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If available employees are not enough, system recommends overtime or target adjustment instead of silently creating an impossible plan.</p>
-          </div>
-        </article>
-
-        <article class="flow-card">
-          <h3>Form Approval Flow</h3>
-          <div class="flow-meta">
-            <span>Actor: Employee + Manager</span>
-            <span>Module: Forms</span>
-            <span>Priority: MVP</span>
-          </div>
-          <div class="mini-activity">
-            <div class="mini-activity-title"><strong>Activity diagram</strong><span>Submit request, route approval, and apply the operational result.</span></div>
-            <div class="mini-flow">
-              <div class="mini-node start"><strong>Create form</strong><span>Leave, overtime, issue, import/export.</span></div>
-              <div class="mini-node"><strong>Validate data</strong><span>Required fields and impact checks.</span></div>
-              <div class="mini-node decision"><strong>Approve?</strong><span>Manager approves, rejects, or asks info.</span><div class="mini-branch"><b>No: return reason</b><b>Yes: apply</b></div></div>
-              <div class="mini-node action"><strong>Apply result</strong><span>Shift, warehouse, issue, notification.</span></div>
-              <div class="mini-node end"><strong>Notify users</strong><span>Requester and stakeholders updated.</span></div>
-            </div>
-          </div>
-          <ol class="flow-steps">
-            <li><div><strong>Create form</strong><span>Employee selects leave, overtime, machine issue, warehouse import, or warehouse export form.</span></div></li>
-            <li><div><strong>Prefill data</strong><span>System fills user, department, line, shift, and date where possible.</span></div></li>
-            <li><div><strong>Validate request</strong><span>System checks required fields and module-specific impact.</span></div></li>
-            <li><div><strong>Submit for approval</strong><span>Form becomes pending and approver receives notification.</span></div></li>
-            <li><div><strong>Manager decision</strong><span>Approver approves, rejects with reason, or requests more information.</span></div></li>
-            <li><div><strong>Apply result</strong><span>System updates schedule, warehouse movement, machine issue, or notification status.</span></div></li>
-          </ol>
-          <div class="branch-box">
-            <strong>Alternate path</strong>
-            <p>If the form affects staffing coverage, system warns the approver before approval. If rejected, requester must receive a reason.</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-header">
-        <div>
-          <h2>Sequence Diagrams</h2>
-          <p>
-            These sequence diagrams show how users, frontend pages, backend APIs, data storage,
-            and AI logic communicate in important flows.
-          </p>
-        </div>
-        <span class="tag">System interaction</span>
-      </div>
-
-      <div class="sequence-tabs">
-        <article class="sequence-card">
-          <div class="sequence-title">
-            <div>
-              <h3>Safety Alert Sequence</h3>
-              <span>AI camera detects restricted-zone entry and routes it to the safety officer.</span>
-            </div>
-          </div>
-
-          <div class="sequence">
-            <div class="lane">
-              <h4>AI Camera</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 84px; --height: 100px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Frontend</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 166px; --height: 260px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Safety API</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 112px; --height: 340px;"></div>
-            </div>
-            <div class="lane">
-              <h4>AI Service</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 138px; --height: 110px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Database</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 268px; --height: 160px;"></div>
-            </div>
-
-            <div class="message" style="--from: 0; --to: 2; --y: 96px;"><div class="message-line"></div><div class="message-label">Detected restricted zone entry</div></div>
-            <div class="message" style="--from: 2; --to: 3; --y: 138px;"><div class="message-line"></div><div class="message-label">Classify severity</div></div>
-            <div class="message reverse" style="--from: 3; --to: 2; --y: 184px;"><div class="message-line"></div><div class="message-label">Return high/critical result</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 262px;"><div class="message-line"></div><div class="message-label">Save safety alert</div></div>
-            <div class="message" style="--from: 2; --to: 1; --y: 322px;"><div class="message-line"></div><div class="message-label">Push dashboard notification</div></div>
-            <div class="message" style="--from: 1; --to: 2; --y: 392px;"><div class="message-line"></div><div class="message-label">Resolve, escalate, or mark false</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 438px;"><div class="message-line"></div><div class="message-label">Update incident status</div></div>
-          </div>
-        </article>
-
-        <article class="sequence-card">
-          <div class="sequence-title">
-            <div>
-              <h3>Workforce AI Recommendation Sequence</h3>
-              <span>Manager generates a shift plan based on targets, availability, and past performance.</span>
-            </div>
-          </div>
-
-          <div class="sequence">
-            <div class="lane">
-              <h4>Factory Manager</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 84px; --height: 330px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Frontend</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 108px; --height: 390px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Workforce API</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 142px; --height: 330px;"></div>
-            </div>
-            <div class="lane">
-              <h4>AI Planner</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 216px; --height: 120px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Database</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 162px; --height: 310px;"></div>
-            </div>
-
-            <div class="message" style="--from: 0; --to: 1; --y: 94px;"><div class="message-line"></div><div class="message-label">Enter target and planning date</div></div>
-            <div class="message" style="--from: 1; --to: 2; --y: 142px;"><div class="message-line"></div><div class="message-label">Request shift recommendation</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 184px;"><div class="message-line"></div><div class="message-label">Load employees, skills, absences</div></div>
-            <div class="message" style="--from: 2; --to: 3; --y: 226px;"><div class="message-line"></div><div class="message-label">Generate optimized plan</div></div>
-            <div class="message reverse" style="--from: 3; --to: 2; --y: 306px;"><div class="message-line"></div><div class="message-label">Return recommendation</div></div>
-            <div class="message reverse" style="--from: 2; --to: 1; --y: 356px;"><div class="message-line"></div><div class="message-label">Display plan and risk notes</div></div>
-            <div class="message" style="--from: 0; --to: 1; --y: 408px;"><div class="message-line"></div><div class="message-label">Approve or modify plan</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 464px;"><div class="message-line"></div><div class="message-label">Save final shift plan</div></div>
-          </div>
-        </article>
-
-        <article class="sequence-card">
-          <div class="sequence-title">
-            <div>
-              <h3>Form Approval Sequence</h3>
-              <span>Employee submits a form and manager approves or rejects the request.</span>
-            </div>
-          </div>
-
-          <div class="sequence">
-            <div class="lane">
-              <h4>Employee</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 86px; --height: 260px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Frontend</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 116px; --height: 350px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Forms API</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 154px; --height: 320px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Manager</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 312px; --height: 124px;"></div>
-            </div>
-            <div class="lane">
-              <h4>Database</h4>
-              <div class="lifeline"></div>
-              <div class="activation" style="--top: 178px; --height: 304px;"></div>
-            </div>
-
-            <div class="message" style="--from: 0; --to: 1; --y: 98px;"><div class="message-line"></div><div class="message-label">Open form and enter data</div></div>
-            <div class="message" style="--from: 1; --to: 2; --y: 148px;"><div class="message-line"></div><div class="message-label">Submit request</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 194px;"><div class="message-line"></div><div class="message-label">Save pending form</div></div>
-            <div class="message" style="--from: 2; --to: 3; --y: 276px;"><div class="message-line"></div><div class="message-label">Notify approver</div></div>
-            <div class="message" style="--from: 3; --to: 2; --y: 334px;"><div class="message-line"></div><div class="message-label">Approve or reject</div></div>
-            <div class="message" style="--from: 2; --to: 4; --y: 394px;"><div class="message-line"></div><div class="message-label">Update form status</div></div>
-            <div class="message reverse" style="--from: 2; --to: 1; --y: 452px;"><div class="message-line"></div><div class="message-label">Show result notification</div></div>
-          </div>
-        </article>
-      </div>
-
-      <section class="section" style="margin: 24px 0 0; box-shadow: none; background: rgba(255,255,255,0.42);">
-        <div class="section-header">
-          <div>
-            <h2>Sequence Step Details</h2>
-            <p>
-              This table translates the visual sequence diagrams into implementation-level steps,
-              including trigger, endpoint or action, updated data, and expected UI feedback.
-            </p>
-          </div>
-          <span class="tag">Implementation detail</span>
-        </div>
-
+      <div class="matrix-wrap">
         <table class="matrix">
-          <thead>
-            <tr>
-              <th>Flow</th>
-              <th>Trigger</th>
-              <th>System Action</th>
-              <th>Data Updated</th>
-              <th>UI Feedback</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Flow</th><th>Trigger</th><th>System Action</th><th>Data Updated</th><th>UI Feedback</th></tr></thead>
           <tbody>
-            <tr>
-              <td>Safety Alert</td>
-              <td>AI camera detects a restricted-zone entry.</td>
-              <td>Create alert, classify severity, save incident, notify responsible users.</td>
-              <td>SafetyAlert, CameraEvent, Notification, ReportStats.</td>
-              <td>Critical alert appears on Dashboard and Safety page.</td>
-            </tr>
-            <tr>
-              <td>Safety Alert Resolution</td>
-              <td>Safety officer clicks resolve, escalate, or mark false.</td>
-              <td>Update alert status and append action history.</td>
-              <td>SafetyAlert.status, SafetyAlert.actionHistory, Notification.status.</td>
-              <td>Alert moves from active list to resolved or escalated list.</td>
-            </tr>
-            <tr>
-              <td>Workforce Recommendation</td>
-              <td>Manager enters target and requests AI schedule.</td>
-              <td>Load employee availability, line needs, previous performance, and generate plan.</td>
-              <td>AIRecommendation, temporary ShiftPlan draft.</td>
-              <td>Recommendation panel shows workers per line, risk notes, and overtime suggestion.</td>
-            </tr>
-            <tr>
-              <td>Workforce Approval</td>
-              <td>Manager approves or modifies schedule.</td>
-              <td>Save final plan and notify assigned employees.</td>
-              <td>ShiftPlan, EmployeeAssignment, Notification.</td>
-              <td>Plan status changes to published and employees appear in assigned list.</td>
-            </tr>
-            <tr>
-              <td>Form Submission</td>
-              <td>Employee submits a leave, overtime, machine, or warehouse request.</td>
-              <td>Validate fields, save pending request, notify approver.</td>
-              <td>FormRequest, Notification.</td>
-              <td>Requester sees pending status and approver receives task.</td>
-            </tr>
-            <tr>
-              <td>Form Approval</td>
-              <td>Manager approves or rejects request.</td>
-              <td>Update form status and apply related module effect.</td>
-              <td>FormRequest, related ShiftPlan or GoodsMovement or MachineIssue.</td>
-              <td>Requester receives result notification and related module summary updates.</td>
-            </tr>
+            <tr><td>Safety Alert</td><td>AI camera detects a restricted-zone entry.</td><td>Create alert, classify severity, save incident, notify responsible users.</td><td>SafetyAlert, CameraEvent, Notification, ReportStats.</td><td>Critical alert appears on Dashboard and Safety page.</td></tr>
+            <tr><td>Safety Alert Resolution</td><td>Safety officer clicks resolve, escalate, or mark false.</td><td>Update alert status and append action history.</td><td>SafetyAlert.status, SafetyAlert.actionHistory, Notification.status.</td><td>Alert moves from active list to resolved or escalated list.</td></tr>
+            <tr><td>Workforce Recommendation</td><td>Manager enters target and requests AI schedule.</td><td>Load employee availability, line needs, previous performance, and generate plan.</td><td>AIRecommendation, temporary ShiftPlan draft.</td><td>Recommendation panel shows workers per line, risk notes, and overtime suggestion.</td></tr>
+            <tr><td>Workforce Approval</td><td>Manager approves or modifies schedule.</td><td>Save final plan and notify assigned employees.</td><td>ShiftPlan, EmployeeAssignment, Notification.</td><td>Plan status changes to published and employees appear in assigned list.</td></tr>
+            <tr><td>Form Submission</td><td>Employee submits a leave, overtime, machine, or warehouse request.</td><td>Validate fields, save pending request, notify approver.</td><td>FormRequest, Notification.</td><td>Requester sees pending status and approver receives task.</td></tr>
+            <tr><td>Form Approval</td><td>Manager approves or rejects request.</td><td>Update form status and apply related module effect.</td><td>FormRequest, related ShiftPlan or GoodsMovement or MachineIssue.</td><td>Requester receives result notification and related module summary updates.</td></tr>
           </tbody>
         </table>
-      </section>
-
-      <section class="section" style="margin: 24px 0 0; box-shadow: none; background: rgba(255,255,255,0.42);">
-        <div class="section-header">
-          <div>
-            <h2>Detailed Demo Scenarios</h2>
-            <p>
-              These scenarios can be used for presentation, testing, and feature planning.
-              Each scenario includes preconditions, main path, alternate path, and expected result.
-            </p>
-          </div>
-          <span class="tag">Use case scripts</span>
-        </div>
-
-        <div class="scenario-grid">
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 1</span>
-              <h3>Critical Safety Alert During Operation</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Line B is running normally. Robot Cell 2 is marked as restricted. Safety officer is logged in.</p>
-            </div>
-            <div class="scenario-block danger">
-              <strong>Main path</strong>
-              <p>AI camera detects a worker entering Robot Cell 2, system classifies the event as critical, creates an alert, and shows it on Dashboard.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>User action</strong>
-              <p>Safety officer opens alert detail, reviews timestamp and location, dispatches safety staff, adds note, and marks incident resolved.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Alternate path</strong>
-              <p>If camera confidence is low, the alert is marked needs review instead of critical until the officer confirms it.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Alert status becomes resolved, action history is saved, and safety report counts one restricted-zone incident.</p>
-            </div>
-          </article>
-
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 2</span>
-              <h3>Line Efficiency Drops Below Target</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Line C has target output of 2,000 units but actual output is below plan and efficiency is 78%.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Main path</strong>
-              <p>System marks Line C as warning and AI checks downtime, defect count, staffing, and material status.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>User action</strong>
-              <p>Production manager opens Line C detail and applies AI suggestion to request two additional operators from Line 5.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Alternate path</strong>
-              <p>If the cause is machine downtime instead of staffing, system suggests creating a maintenance request.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Workforce module receives staffing request, Line C recommendation status changes to applied, and dashboard updates risk level.</p>
-            </div>
-          </article>
-
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 3</span>
-              <h3>Warehouse Item Stored in Wrong Zone</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Batch RM-204 should be stored in Raw Material Zone A but is detected in Finished Goods Zone C.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Main path</strong>
-              <p>System creates wrong placement alert, shows expected and actual zone, and notifies warehouse manager.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>User action</strong>
-              <p>Warehouse manager assigns staff to verify, confirms the item is misplaced, and records movement back to Zone A.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Alternate path</strong>
-              <p>If the item was moved intentionally but not recorded, manager updates movement history instead of moving the item.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Alert is resolved, goods movement history is updated, and warehouse occupancy statistics are recalculated.</p>
-            </div>
-          </article>
-
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 4</span>
-              <h3>AI Suggests Night Shift Overtime</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Daily target is behind by 600 units. Night shift has 2 missing operators and 8 available employees.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Main path</strong>
-              <p>Manager opens Workforce page, enters target, and AI suggests moving 2 operators plus 1.5 hours overtime.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>User action</strong>
-              <p>Manager reviews cost impact, modifies one employee assignment, approves the plan, and publishes schedule.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Alternate path</strong>
-              <p>If overtime limit is exceeded, system suggests reducing target or moving workers from lower-priority lines.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Shift plan becomes published, affected employees receive notification, and overtime record appears in reports.</p>
-            </div>
-          </article>
-
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 5</span>
-              <h3>Employee Submits Leave Request</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Employee belongs to Line A morning shift and wants to request leave for tomorrow.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Main path</strong>
-              <p>Employee opens Leave Request, system prefills employee and shift data, and employee submits the form.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>System check</strong>
-              <p>System checks whether Line A still has enough workers if the request is approved.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Manager action</strong>
-              <p>Manager approves if coverage is enough or rejects with reason if the line becomes understaffed.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Employee receives result notification and workforce availability updates if approved.</p>
-            </div>
-          </article>
-
-          <article class="scenario-card">
-            <div>
-              <span class="scenario-pill">Scenario 6</span>
-              <h3>Machine Fault Report Affects Production</h3>
-            </div>
-            <div class="scenario-block">
-              <strong>Precondition</strong>
-              <p>Operator notices abnormal vibration on Press Unit P-14 while Line D is running.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Main path</strong>
-              <p>Operator submits Machine Issue Report with machine id, line, severity, and description.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>System action</strong>
-              <p>System notifies production manager, marks Line D as warning, and creates maintenance task.</p>
-            </div>
-            <div class="scenario-block warning">
-              <strong>Alternate path</strong>
-              <p>If severity is critical, Line D status changes to stopped and dashboard immediately shows production risk.</p>
-            </div>
-            <div class="scenario-block">
-              <strong>Expected result</strong>
-              <p>Issue status is tracked until resolved, downtime is calculated, and production report includes the incident.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <div class="legend">
-        <span><i style="background: var(--accent);"></i> Actor or system lane</span>
-        <span><i style="background: var(--blue);"></i> Request or response message</span>
-        <span><i style="background: var(--warning);"></i> Decision or review point</span>
-        <span><i style="background: var(--danger);"></i> Critical alert path</span>
       </div>
     </section>
-  </main>
+
+    <!-- Demo scenarios -->
+    <section class="section flush">
+      <div class="section-header">
+        <div>
+          <h2>Detailed Demo Scenarios</h2>
+          <p>These scenarios can be used for presentation, testing, and feature planning. Each scenario includes preconditions, main path, alternate path, and expected result.</p>
+        </div>
+        <span class="tag">Use case scripts</span>
+      </div>
+      <div class="scenario-grid">
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 1</span>
+          <h3>Critical Safety Alert During Operation</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Line B is running normally. Robot Cell 2 is marked as restricted. Safety officer is logged in.</p></div>
+          <div class="scenario-block danger"><strong>Main path</strong><p>AI camera detects a worker entering Robot Cell 2, system classifies the event as critical, creates an alert, and shows it on Dashboard.</p></div>
+          <div class="scenario-block"><strong>User action</strong><p>Safety officer opens alert detail, reviews timestamp and location, dispatches safety staff, adds note, and marks incident resolved.</p></div>
+          <div class="scenario-block warning"><strong>Alternate path</strong><p>If camera confidence is low, the alert is marked needs review instead of critical until the officer confirms it.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Alert status becomes resolved, action history is saved, and safety report counts one restricted-zone incident.</p></div>
+        </article>
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 2</span>
+          <h3>Line Efficiency Drops Below Target</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Line C has target output of 2,000 units but actual output is below plan and efficiency is 78%.</p></div>
+          <div class="scenario-block warning"><strong>Main path</strong><p>System marks Line C as warning and AI checks downtime, defect count, staffing, and material status.</p></div>
+          <div class="scenario-block"><strong>User action</strong><p>Production manager opens Line C detail and applies AI suggestion to request two additional operators from Line 5.</p></div>
+          <div class="scenario-block warning"><strong>Alternate path</strong><p>If the cause is machine downtime instead of staffing, system suggests creating a maintenance request.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Workforce module receives staffing request, Line C recommendation status changes to applied, and dashboard updates risk level.</p></div>
+        </article>
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 3</span>
+          <h3>Warehouse Item Stored in Wrong Zone</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Batch RM-204 should be stored in Raw Material Zone A but is detected in Finished Goods Zone C.</p></div>
+          <div class="scenario-block warning"><strong>Main path</strong><p>System creates wrong placement alert, shows expected and actual zone, and notifies warehouse manager.</p></div>
+          <div class="scenario-block"><strong>User action</strong><p>Warehouse manager assigns staff to verify, confirms the item is misplaced, and records movement back to Zone A.</p></div>
+          <div class="scenario-block warning"><strong>Alternate path</strong><p>If the item was moved intentionally but not recorded, manager updates movement history instead of moving the item.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Alert is resolved, goods movement history is updated, and warehouse occupancy statistics are recalculated.</p></div>
+        </article>
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 4</span>
+          <h3>AI Suggests Night Shift Overtime</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Daily target is behind by 600 units. Night shift has 2 missing operators and 8 available employees.</p></div>
+          <div class="scenario-block warning"><strong>Main path</strong><p>Manager opens Workforce page, enters target, and AI suggests moving 2 operators plus 1.5 hours overtime.</p></div>
+          <div class="scenario-block"><strong>User action</strong><p>Manager reviews cost impact, modifies one employee assignment, approves the plan, and publishes schedule.</p></div>
+          <div class="scenario-block warning"><strong>Alternate path</strong><p>If overtime limit is exceeded, system suggests reducing target or moving workers from lower-priority lines.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Shift plan becomes published, affected employees receive notification, and overtime record appears in reports.</p></div>
+        </article>
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 5</span>
+          <h3>Employee Submits Leave Request</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Employee belongs to Line A morning shift and wants to request leave for tomorrow.</p></div>
+          <div class="scenario-block"><strong>Main path</strong><p>Employee opens Leave Request, system prefills employee and shift data, and employee submits the form.</p></div>
+          <div class="scenario-block warning"><strong>System check</strong><p>System checks whether Line A still has enough workers if the request is approved.</p></div>
+          <div class="scenario-block"><strong>Manager action</strong><p>Manager approves if coverage is enough or rejects with reason if the line becomes understaffed.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Employee receives result notification and workforce availability updates if approved.</p></div>
+        </article>
+
+        <article class="scenario-card">
+          <span class="scenario-pill">Scenario 6</span>
+          <h3>Machine Fault Report Affects Production</h3>
+          <div class="scenario-block"><strong>Precondition</strong><p>Operator notices abnormal vibration on Press Unit P-14 while Line D is running.</p></div>
+          <div class="scenario-block warning"><strong>Main path</strong><p>Operator submits Machine Issue Report with machine id, line, severity, and description.</p></div>
+          <div class="scenario-block"><strong>System action</strong><p>System notifies production manager, marks Line D as warning, and creates maintenance task.</p></div>
+          <div class="scenario-block danger"><strong>Alternate path</strong><p>If severity is critical, Line D status changes to stopped and dashboard immediately shows production risk.</p></div>
+          <div class="scenario-block"><strong>Expected result</strong><p>Issue status is tracked until resolved, downtime is calculated, and production report includes the incident.</p></div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="legend">
+      <span><i style="background:var(--text)"></i> Actor / system lane</span>
+      <span><i style="background:var(--blue)"></i> Request / response message</span>
+      <span><i style="background:var(--amber)"></i> Decision / review point</span>
+      <span><i style="background:var(--red)"></i> Critical alert path</span>
+    </div>
+  </section>
+
+  <div class="foot">
+    Smart Factory AI Dashboard · Activity &amp; Sequence Diagrams<br>
+    Generated from <span class="mono">smart-factory-ai-dashboard-activity-sequence-diagrams</span> · Design language inspired by Vercel / Geist
+  </div>
+</main>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  function systemDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;}
+  var saved=null; try{saved=localStorage.getItem('sfad-flows-theme');}catch(e){}
+  root.setAttribute('data-theme',(saved==='dark'||saved==='light')?saved:(systemDark()?'dark':'light'));
+  function current(){return root.getAttribute('data-theme')||'light';}
+  document.getElementById('themeBtn').addEventListener('click',function(){
+    var next=current()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('sfad-flows-theme',next);}catch(e){}
+  });
+})();
+</script>
 </body>
 </html>

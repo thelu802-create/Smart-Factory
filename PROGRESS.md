@@ -3,7 +3,7 @@
 > A single file for the whole team to track how far the app has come,
 > described from the **end-user (UI) perspective**. Update it whenever a feature is completed.
 
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-21
 
 ---
 
@@ -23,7 +23,7 @@
 
 - **Frontend:** React + Vite + TypeScript — runs at `http://localhost:5173`
 - **Backend:** C# ASP.NET Core Web API — runs at `http://localhost:8000`
-- **Database:** SQLite (a real file on disk at `C:\SmartFactoryData\smart_factory_demo.db`), auto-seeded from `schema.sql` + `seed.sql`; falls back to JSON when the DB cannot be opened.
+- **Database:** **SQL Server** (local `.\SQLEXPRESS`, database `SmartFactory`, Windows Authentication) via **EF Core code-first**. The schema is generated from C# entities by migrations (`dotnet ef`), and the demo data is seeded on startup from `database/seed.sql`. SQL Server is now required (no SQLite/JSON fallback).
 
 Full run instructions: see [README.md](README.md) and [backend-dotnet/README.md](backend-dotnet/README.md).
 Quick start for testing:
@@ -43,15 +43,15 @@ Quick start for testing:
 | **Production** | Production line table: status, output, efficiency, defect rate, downtime; view one line's detail | 🟢 Viewable | No line-update action yet |
 | **Warehouse** | **Searchable + paginated** inventory + **movement form** (Import / Export / Transfer) + per-item **movement history** | ✅ **Complete** | Movements adjust quantity/zone, recompute status + zone usage, record history, and **auto-raise a notification on Low Stock / Wrong Zone** — validated & persisted |
 | **Safety** | Safety alert list; view detail; **Resolve / Escalate** buttons | ✅ **Complete** | **Resolve/escalate persists (with action_note), survives restart** |
-| **Cameras** | AI camera event log (event type, confidence, time) | 🟢 Viewable | — |
+| **Cameras** | AI camera event log + **Simulate detection** form (camera, incident type, severity, confidence) | ✅ **Complete** | A serious, confident detection (High/Critical + confidence ≥ 80%) **auto-raises a linked safety alert and safety notification** (two-way linked); low-severity detections are only logged — validated & persisted |
 | **Workforce** | Shift plan by line + AI recommendations; **generate** button | ✅ **Complete** | **Generate computes gaps from shifts and inserts recommendations; persists across restart** |
 | **Forms** | Approval queue for forms; **Approve / Reject** buttons | ✅ **Complete** | **Approve/reject persists to the DB and stays after a restart** |
-| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | Mark-as-read persists; **warehouse movements now auto-create alerts here (cross-page)** |
+| **Notifications** | Notification list (safety, production, warehouse, forms); mark as **read** | ✅ **Complete** | Mark-as-read persists; **warehouse movements and camera detections now auto-create alerts here (cross-page)** |
 | **Reports** | Reporting page by module | ⚪ Mock data | Backend endpoints exist but the frontend is not wired; no real aggregation |
 | **Analytics** | Performance charts derived from production data | 🟢 Viewable | Reads real data, derived charts |
 | **Settings** | Configuration page | ⚪ Mock data | Static, no logic yet |
 
-**Summary:** 5 complete write features (Forms, Safety, Notifications, Workforce, Warehouse), 4 pages showing real data (read-only), **no stub buttons left**, 2 pages still mock.
+**Summary:** 6 complete write features (Forms, Safety, Notifications, Workforce, Warehouse, Cameras), 3 pages showing real data (read-only), **no stub buttons left**, 2 pages still mock.
 
 ---
 
@@ -65,7 +65,8 @@ Quick start for testing:
 | `GET /warehouse/items`, `/warehouse/items/{id}` | Inventory + detail | 🟢 Real read |
 | `GET /safety/alerts`, `/safety/alerts/{id}` | Safety alerts + detail | 🟢 Real read |
 | `POST /safety/alerts/{id}/resolve`, `/escalate` | Resolve / escalate alert | ✅ Real write (status + action_note) |
-| `GET /cameras/events` | Camera events | 🟢 Real read |
+| `GET /cameras/events` | Camera events (live; includes linked `alertId`) | 🟢 Real read |
+| `POST /cameras/detect` | Simulate a camera detection | ✅ Real write (multi-table txn; auto-raises linked safety alert + notification when severe) |
 | `GET /workforce/shifts`, `/workforce/recommendations` | Shifts + recommendations | 🟢 Real read |
 | `POST /workforce/recommendations/generate` | Generate recommendations | ✅ Real write (inserts ai_recommendations from shift gaps) |
 | `GET /warehouse/zones` | Zone list (for transfer picker) | 🟢 Real read |
@@ -81,10 +82,9 @@ Quick start for testing:
 
 ## 5. Infrastructure / foundations in place
 
-- 🔵 **On-disk SQLite database** — fixed location `C:\SmartFactoryData\`, auto-creates the folder + seeds on first run, keeps data across restarts.
-- 🔵 **Full 31-table schema** (`schema.sql`) matching the design docs, including the enterprise relationship tables (permissions, io_masters, form_approval_steps, ...).
-- 🔵 **JSON fallback** — if SQLite cannot be opened, the API still returns sample data from `sample-data.json` so the frontend keeps working.
-- 🔵 **Repository pattern** — `DbConnectionFactory` + per-module repositories (Forms, Safety, Notifications, Workforce, Warehouse): a reusable live-read + write template, including multi-table transactions.
+- 🔵 **SQL Server + EF Core code-first** — `SmartFactoryDbContext` (31 entities, snake_case via `EFCore.NamingConventions`) is the single source of truth. `InitialCreate` migration builds the schema; `Migrate()` + `DatabaseSeeder` run on startup (creates schema if missing, seeds `seed.sql` when empty). Change the model → `dotnet dotnet-ef migrations add <Name>` → `database update`.
+- 🔵 **Full 31-table schema** generated from the C# entities, including the enterprise relationship tables (permissions, io_masters, form_approval_steps, ...). Two-way FKs, unique indexes, and composite keys all reproduced. (`database/schema.sql` is kept for reference only; it is no longer executed.)
+- 🔵 **Repository pattern on EF Core** — per-module repositories (Forms, Safety, Notifications, Workforce, Warehouse, Cameras) query and write through the `DbContext`, including multi-table transactions (warehouse move, camera auto-alert). `SampleDataService` is the EF-backed read/aggregation service for dashboard and list views.
 - 🔵 **CORS** allowing the localhost frontend to call the API.
 - 🔵 **Frontend layer** — `factoryApi` (API calls), `useApiData` (auto mock fallback + `reload()` after an action), reusable UI components (KpiCard, Panel, StatusBadge, PageHeader).
 
@@ -140,6 +140,8 @@ Why this strategy:
 
 | Date | Notes |
 |---|---|
+| 2026-07-21 | 🔵 **Migrated the whole backend from SQLite to SQL Server with EF Core code-first.** Added `SmartFactoryDbContext` (31 entities, snake_case, composite keys, 39 FKs, 10 unique indexes) + `InitialCreate` migration; connection to local `.\SQLEXPRESS` database `SmartFactory` (Windows Auth). Rewrote all 6 repositories and the read service (`SampleDataService`) onto the `DbContext`; startup now runs `Migrate()` + seeds `seed.sql`. Removed the SQLite layer (`DbConnectionFactory`, `Microsoft.Data.Sqlite`) and JSON fallback. Every completed feature (Forms, Safety, Notifications, Workforce, Warehouse, Cameras) re-verified end-to-end and durable across restart. |
+| 2026-07-21 | ✅ **Cameras — Camera → Safety → Notification auto-alert**: added a Simulate-detection form and `POST /cameras/detect` (`CameraRepository`). A High/Critical detection with confidence ≥ 80% records a camera event **and** auto-raises a linked `safety_alert` (two-way linked via `safety_alert_camera_events` + `related_alert_id`) plus a Safety notification — one action now flows across three modules. Low-severity detections are only logged. |
 | 2026-07-19 | ✅ **Warehouse inventory search + pagination** on the table; **auto-alerts** — a movement that turns an item Low Stock or Wrong Zone now inserts a Warehouse notification (only on status transition, no duplicates), visible on the Notifications page. |
 | 2026-07-18 | ✅ **Warehouse full movement model**: added Transfer between zones, automatic recompute of item status (Low Stock / Correct / Wrong Zone) and zone usage+status after every movement, and per-item movement history (`GET /warehouse/zones`, `GET /warehouse/items/{id}/movements`). |
 | 2026-07-17 | ✅ **Warehouse stock movement (Import/Export)** now persists (`WarehouseRepository`): a multi-table transaction that inserts `goods_movements` and adjusts `warehouse_items.quantity`, with validation (quantity > 0, no overselling). Added a movement form on the Warehouse page. |
