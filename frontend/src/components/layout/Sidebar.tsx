@@ -14,6 +14,7 @@ const operationLinks = [
   { to: '/forms', label: 'Forms' },
   { to: '/notifications', label: 'Notifications' },
   { to: '/reports', label: 'Reports' },
+  { to: '/users', label: 'User Management' },
   { to: '/settings', label: 'Settings' }
 ];
 

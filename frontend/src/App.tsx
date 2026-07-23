@@ -10,6 +10,7 @@ import { WorkforcePage } from './pages/WorkforcePage';
 import { FormsPage } from './pages/FormsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { UsersPage } from './pages/UsersPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/forms" element={<FormsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </AppLayout>
